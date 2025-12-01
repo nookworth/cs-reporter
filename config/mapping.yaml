@@ -1,0 +1,155 @@
+# CS Reporter Configuration
+# This file maps Excel cells to PowerPoint placeholders
+
+# Path to the PowerPoint template (relative to project root)
+template_path: templates/report_template.pptx
+
+# Output directory for generated reports (relative to project root)
+output_dir: output
+
+# Excel field mappings
+# Each field specifies which Excel sheet and cell to read from
+excel_fields:
+  month: # how to do month?
+    sheet: "Summary"
+    cell: "B5"
+
+  prev_month: # how to do previous month?
+    sheet: "Summary"
+    cell: "D10"
+
+  re_req:
+    sheet: "RE"
+    cell: "C15" # how to do this?
+
+  # Example: Month name
+  report_month:
+    sheet: "Summary"
+    cell: "A1"
+
+  # Add more fields as needed...
+  # field_name:
+  #   sheet: "SheetName"
+  #   cell: "A1"
+
+# Optional: Formatting rules for specific fields
+formatting:
+  revenue:
+    type: "currency"
+    decimals: 2
+
+  customer_count:
+    type: "number"
+    decimals: 0
+
+  growth_rate:
+    type: "percentage"
+    decimals: 1
+
+  # Other types: "text" (default)
+
+# Dynamic table mappings
+# Tables read multiple rows from Excel and populate PowerPoint tables
+table_fields:
+  # Example: Support categories table with aggregation
+  re_sup_cat:
+    sheet: "RE"
+    start_row: 2  # First row of data (1-indexed)
+
+    # Columns to read from Excel
+    columns:
+      - name: "re_cat"              # This becomes the field name for placeholders
+        col: "Support Category"     # Column heading name in Excel
+
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "re_cat"              # Group by this column
+    count_column: "re_cat_count"    # Name for the count field in output
+
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # Support categories table (SU)
+  su_sup_cat:
+    sheet: "SU"
+    start_row: 2  # First row of data (1-indexed)
+
+    # Columns to read from Excel
+    columns:
+      - name: "su_cat"              # This becomes the field name for placeholders
+        col: "Support Category"     # Column heading name in Excel
+
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "su_cat"              # Group by this column
+    count_column: "su_cat_count"    # Name for the count field in output
+
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # Top organizations table
+  top_orgs:
+    sheet: "Organizations"
+    start_row: 2  # First row of data (1-indexed) - UPDATE THIS
+
+    # Columns to read from Excel
+    columns:
+      - name: "org_name"            # This becomes the field name for placeholders
+        col: "Organization"         # Column heading name in Excel - UPDATE THIS
+
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "org_name"            # Group by this column
+    count_column: "org_count"       # Name for the count field in output
+
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # Example: Simple table without aggregation
+  # monthly_metrics:
+  #   sheet: "Metrics"
+  #   start_row: 10
+  #   columns:
+  #     - name: "metric_name"
+  #       col: "Metric Name"    # Column heading in Excel
+  #     - name: "value"
+  #       col: "Value"          # Column heading in Excel
+  #   aggregate: false  # No aggregation, just read rows as-is
+
+# Notes:
+# 1. In your Excel file, put data at the cells specified above
+# 2. In your PowerPoint template, use {{field_name}} as placeholders
+#    For example: "Revenue: {{revenue}}" will become "Revenue: $123,456.00"
+# 3. The field names must match between this config and your PPT placeholders
+#
+# For dynamic tables:
+# 4. Create a table in PowerPoint with one row as the template
+# 5. In the first cell, put {{table:table_name}} (e.g., {{table:re_sup_cat}})
+# 6. In other cells, put placeholders matching column names (e.g., {{re_cat}}, {{re_cat_count}})
+# 7. The script will auto-populate the table with your data
+# 8. For table columns, 'col' specifies the COLUMN HEADING NAME in Excel (row before start_row)
+#    The script searches for this heading and reads data from that column
+#
+# Table example in PowerPoint:
+# ┌───────────────────────────────────┬────────────────┐
+# │ {{table:re_sup_cat}} {{re_cat}}   │ {{re_cat_count}}│
+# └───────────────────────────────────┴────────────────┘
+#
+# This will become:
+# ┌──────────────┬────────┐
+# │ Technical    │ 45     │
+# │ Billing      │ 23     │
+# │ General      │ 12     │
+# └──────────────┴────────┘
