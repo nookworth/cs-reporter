@@ -7,59 +7,82 @@ template_path: templates/report_template.pptx
 # Output directory for generated reports (relative to project root)
 output_dir: output
 
-# Excel field mappings
-# Each field specifies which Excel sheet and cell to read from
-excel_fields:
-  month: # how to do month?
-    sheet: "Summary"
-    cell: "B5"
+standard_excel_fields:
+  sheet: "Tickets ADUS Tickets crea...1"
 
-  prev_month: # how to do previous month?
-    sheet: "Summary"
-    cell: "D10"
+  month:
+    cell: "B" # parse month from "Ticket Created - Date" column
+
+  prev_month: # prev month Excel file
+    cell: "B" # parse month from "Ticket Created - Date" column
+
+retail_excel_fields:
+  sheet: "Tickets ADUS Tickets crea...1"
 
   re_req:
-    sheet: "RE"
-    cell: "C15" # how to do this?
+    cell: # simple count of rows in the sheet
 
-  # Example: Month name
-  report_month:
-    sheet: "Summary"
-    cell: "A1"
+  re_prev_req: # prev month
+    cell: # count rows
 
-  # Add more fields as needed...
-  # field_name:
-  #   sheet: "SheetName"
-  #   cell: "A1"
+  re_reso:
+    cell: # Difference between "N" and "B" + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
+          # e.g. 12/2/2025 - 12/2/2025 = 1, 12/3/2025 - 12/2/2025 = 2, etc. 
+  
+  re_prev_reso: # prev month
+    cell: # Difference between "N" and "B" + 1, same rules as above
 
-# Optional: Formatting rules for specific fields
-formatting:
-  revenue:
-    type: "currency"
-    decimals: 2
+  re_sat:
+    cell: "P" # count "good" 
 
-  customer_count:
-    type: "number"
-    decimals: 0
+  re_prev_sat:
+    sheet: "P" # count "good"
 
-  growth_rate:
-    type: "percentage"
-    decimals: 1
+  re_sat_c:
+    cell: "P" # "good with comment"
+  
+  re_prev_sat_c:
+    cell: "P" # "good with comment"
 
-  # Other types: "text" (default)
+supplier_excel_fields:
+  sheet: "Tickets ADUS Tickets crea...2"
+
+  su_req:
+    cell: # simple count of rows
+
+  su_prev_req: # prev month
+    cell: # count rows
+
+  su_reso:
+    cell: # Difference between "N" and "B" + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
+  
+  su_prev_reso: # prev month
+    cell: # Difference between "N" and "B" + 1, same rules as above
+
+  su_sat:
+    cell: "P" # count "good" instances
+
+  su_sat_c:
+    cell: "P" # count "good with comment" instances
+
+  su_prev_sat: # prev month
+    cell: "P" # count "good" instances
+
+  su_prev_sat_c:
+    cell: "P" # count "good with comment" instances
 
 # Dynamic table mappings
 # Tables read multiple rows from Excel and populate PowerPoint tables
 table_fields:
   # Example: Support categories table with aggregation
   re_sup_cat:
-    sheet: "RE"
+    sheet: "Tickets ADUS Tickets crea...1"
     start_row: 2  # First row of data (1-indexed)
 
     # Columns to read from Excel
     columns:
       - name: "re_cat"              # This becomes the field name for placeholders
-        col: "Support Category"     # Column heading name in Excel
+        col: "W"
 
     # Aggregation settings
     aggregate: true                 # Enable aggregation
@@ -75,13 +98,13 @@ table_fields:
 
   # Support categories table (SU)
   su_sup_cat:
-    sheet: "SU"
+    sheet: "Tickets ADUS Tickets crea...2"
     start_row: 2  # First row of data (1-indexed)
 
     # Columns to read from Excel
     columns:
       - name: "su_cat"              # This becomes the field name for placeholders
-        col: "Support Category"     # Column heading name in Excel
+        col: "W"
 
     # Aggregation settings
     aggregate: true                 # Enable aggregation
@@ -103,7 +126,7 @@ table_fields:
     # Columns to read from Excel
     columns:
       - name: "org_name"            # This becomes the field name for placeholders
-        col: "Organization"         # Column heading name in Excel - UPDATE THIS
+        col: "M"
 
     # Aggregation settings
     aggregate: true                 # Enable aggregation
