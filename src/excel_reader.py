@@ -5,23 +5,28 @@ Extracts data from specified cells according to the configuration.
 
 import pandas as pd
 from pathlib import Path
+from datetime import datetime
 
 
 class ExcelReader:
     """Reads data from Excel files based on configuration mapping."""
 
-    def __init__(self, excel_path, config):
+    def __init__(self, excel_path, config, previous_month_data=None):
         """
         Initialize the Excel reader.
 
         Args:
             excel_path: Path to the Excel file
             config: Configuration dictionary with field mappings
+            previous_month_data: Optional dictionary with previous month's data
         """
         self.excel_path = Path(excel_path)
         self.config = config
         self.excel_fields = config.get('excel_fields', {})
         self.table_fields = config.get('table_fields', {})
+        self.current_month_fields = config.get('current_month_fields', {})
+        self.previous_month_fields = config.get('previous_month_fields', {})
+        self.previous_month_data = previous_month_data or {}
 
     def extract_data(self):
         """
@@ -32,7 +37,7 @@ class ExcelReader:
         """
         data = {}
 
-        # Extract single-cell fields
+        # Extract legacy single-cell fields (for backward compatibility)
         for field_name, field_config in self.excel_fields.items():
             try:
                 value = self._read_cell(
@@ -43,6 +48,30 @@ class ExcelReader:
             except Exception as e:
                 raise ValueError(
                     f"Error reading field '{field_name}': {e}"
+                )
+
+        # Extract current month fields with operations
+        for field_name, field_config in self.current_month_fields.items():
+            try:
+                value = self._execute_operation(field_name, field_config)
+                data[field_name] = value
+            except Exception as e:
+                raise ValueError(
+                    f"Error extracting field '{field_name}': {e}"
+                )
+
+        # Extract previous month fields from history
+        for field_name, field_config in self.previous_month_fields.items():
+            try:
+                source_field = field_config.get('source')
+                if source_field and source_field in self.previous_month_data:
+                    data[field_name] = self.previous_month_data[source_field]
+                else:
+                    data[field_name] = None
+                    print(f"  Warning: Previous month data not found for '{field_name}'")
+            except Exception as e:
+                raise ValueError(
+                    f"Error reading previous month field '{field_name}': {e}"
                 )
 
         # Extract table data
@@ -297,3 +326,143 @@ class ExcelReader:
             return f"{float(value):,.{decimals}f}"
         else:
             return str(value)
+
+    def _execute_operation(self, field_name, field_config):
+        """
+        Execute an operation on Excel data.
+
+        Args:
+            field_name: Name of the field
+            field_config: Configuration for the operation
+
+        Returns:
+            Result of the operation
+        """
+        operation = field_config.get('operation')
+        sheet = field_config.get('sheet')
+
+        if operation == 'parse_month':
+            return self._op_parse_month(sheet, field_config)
+        elif operation == 'count_rows':
+            return self._op_count_rows(sheet, field_config)
+        elif operation == 'avg_date_diff':
+            return self._op_avg_date_diff(sheet, field_config)
+        elif operation == 'count_value':
+            return self._op_count_value(sheet, field_config)
+        else:
+            raise ValueError(f"Unknown operation: '{operation}' for field '{field_name}'")
+
+    def _op_parse_month(self, sheet, config):
+        """
+        Parse month from a date column.
+
+        Returns:
+            Month name (e.g., "November 2025")
+        """
+        column = config.get('column')
+
+        # Read the sheet
+        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
+
+        # Get column index
+        col_idx = self._column_letter_to_index(column)
+
+        # Read first non-null date value
+        for idx in range(len(df)):
+            value = df.iloc[idx, col_idx]
+            if not pd.isna(value):
+                # Try to parse as date
+                try:
+                    date = pd.to_datetime(value)
+                    return date.strftime("%B %Y")  # e.g., "November 2025"
+                except:
+                    continue
+
+        return "Unknown"
+
+    def _op_count_rows(self, sheet, config):
+        """
+        Count total rows in a sheet (excluding header).
+
+        Returns:
+            Number of rows
+        """
+        # Read the sheet
+        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=0)
+
+        # Count non-empty rows
+        return len(df.dropna(how='all'))
+
+    def _op_avg_date_diff(self, sheet, config):
+        """
+        Calculate average date difference between two date columns.
+        Ignores differences > max_days.
+
+        Returns:
+            Average difference in days (rounded to 1 decimal)
+        """
+        date_col_start = config.get('date_col_start')
+        date_col_end = config.get('date_col_end')
+        max_days = config.get('max_days', 999)
+
+        # Read the sheet
+        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
+
+        # Get column indices
+        start_col_idx = self._column_letter_to_index(date_col_start)
+        end_col_idx = self._column_letter_to_index(date_col_end)
+
+        differences = []
+
+        # Skip header row (row 0)
+        for idx in range(1, len(df)):
+            start_val = df.iloc[idx, start_col_idx]
+            end_val = df.iloc[idx, end_col_idx]
+
+            if pd.isna(start_val) or pd.isna(end_val):
+                continue
+
+            try:
+                start_date = pd.to_datetime(start_val)
+                end_date = pd.to_datetime(end_val)
+
+                # Calculate difference + 1 (as per requirement)
+                diff_days = (end_date - start_date).days + 1
+
+                # Ignore if > max_days
+                if diff_days <= max_days:
+                    differences.append(diff_days)
+            except:
+                continue
+
+        if not differences:
+            return 0.0
+
+        avg = sum(differences) / len(differences)
+        return round(avg, 1)
+
+    def _op_count_value(self, sheet, config):
+        """
+        Count occurrences of a specific value in a column.
+
+        Returns:
+            Count of matching values
+        """
+        column = config.get('column')
+        value = config.get('value')
+
+        # Read the sheet
+        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
+
+        # Get column index
+        col_idx = self._column_letter_to_index(column)
+
+        # Count matching values (case-insensitive)
+        count = 0
+        for idx in range(1, len(df)):  # Skip header
+            cell_value = df.iloc[idx, col_idx]
+            if not pd.isna(cell_value):
+                if str(cell_value).strip().lower() == value.lower():
+                    count += 1
+
+        return count

@@ -120,5 +120,7 @@ env/
 # CS Reporter specific
 output/*.pptx
 !output/.gitkeep
+output/history/*.json
+!output/history/.gitkeep
 
 .claude/
