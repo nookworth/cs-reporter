@@ -116,11 +116,13 @@ MANIFEST
 venv/
 ENV/
 env/
+.venv/
 
 # CS Reporter specific
 output/*.pptx
 !output/.gitkeep
 output/history/*.json
 !output/history/.gitkeep
+data/
 
 .claude/

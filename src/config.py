@@ -38,16 +38,7 @@ def load_config(config_path=None):
     # Load YAML
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
-
-    # Validate required fields - need at least one field source
-    has_excel_fields = 'excel_fields' in config
-    has_current_month_fields = 'current_month_fields' in config
-
-    if not (has_excel_fields or has_current_month_fields):
-        raise ValueError(
-            "Config must contain at least one of: 'excel_fields' or 'current_month_fields'"
-        )
-
+ 
     if 'template_path' not in config:
         raise ValueError("Config must contain 'template_path'")
 

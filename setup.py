@@ -16,9 +16,9 @@ setup(
     description="Excel to PowerPoint report generator",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="Your Name",
-    author_email="your.email@example.com",
-    url="https://github.com/yourusername/cs-reporter",
+    author="Christopher Morrison",
+    author_email="chrismorrison1987@gmail.com",
+    url="https://github.com/nookworth/cs-reporter",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[

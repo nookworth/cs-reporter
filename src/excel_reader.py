@@ -7,6 +7,8 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
+from . import excel_utils
+
 
 class ExcelReader:
     """Reads data from Excel files based on configuration mapping."""
@@ -18,15 +20,14 @@ class ExcelReader:
         Args:
             excel_path: Path to the Excel file
             config: Configuration dictionary with field mappings
-            previous_month_data: Optional dictionary with previous month's data
+            previous_month_data: Optional dictionary with previous month's data (currently unused)
         """
         self.excel_path = Path(excel_path)
         self.config = config
-        self.excel_fields = config.get('excel_fields', {})
         self.table_fields = config.get('table_fields', {})
-        self.current_month_fields = config.get('current_month_fields', {})
-        self.previous_month_fields = config.get('previous_month_fields', {})
-        self.previous_month_data = previous_month_data or {}
+        self.standard_excel_fields = config.get('standard_excel_fields', {})
+        self.retail_excel_fields = config.get('retail_excel_fields', {})
+        self.supplier_excel_fields = config.get('supplier_excel_fields', {})
 
     def extract_data(self):
         """
@@ -37,42 +38,14 @@ class ExcelReader:
         """
         data = {}
 
-        # Extract legacy single-cell fields (for backward compatibility)
-        for field_name, field_config in self.excel_fields.items():
-            try:
-                value = self._read_cell(
-                    sheet_name=field_config['sheet'],
-                    cell=field_config['cell']
-                )
-                data[field_name] = self._format_value(field_name, value)
-            except Exception as e:
-                raise ValueError(
-                    f"Error reading field '{field_name}': {e}"
-                )
+        # Extract standard excel fields
+        data.update(self._extract_field_group(self.standard_excel_fields, 'standard'))
 
-        # Extract current month fields with operations
-        for field_name, field_config in self.current_month_fields.items():
-            try:
-                value = self._execute_operation(field_name, field_config)
-                data[field_name] = value
-            except Exception as e:
-                raise ValueError(
-                    f"Error extracting field '{field_name}': {e}"
-                )
+        # Extract retail excel fields
+        data.update(self._extract_field_group(self.retail_excel_fields, 'retail'))
 
-        # Extract previous month fields from history
-        for field_name, field_config in self.previous_month_fields.items():
-            try:
-                source_field = field_config.get('source')
-                if source_field and source_field in self.previous_month_data:
-                    data[field_name] = self.previous_month_data[source_field]
-                else:
-                    data[field_name] = None
-                    print(f"  Warning: Previous month data not found for '{field_name}'")
-            except Exception as e:
-                raise ValueError(
-                    f"Error reading previous month field '{field_name}': {e}"
-                )
+        # Extract supplier excel fields
+        data.update(self._extract_field_group(self.supplier_excel_fields, 'supplier'))
 
         # Extract table data
         for table_name, table_config in self.table_fields.items():
@@ -86,46 +59,70 @@ class ExcelReader:
 
         return data
 
-    def _read_cell(self, sheet_name, cell):
+    def _extract_field_group(self, field_group, group_name):
         """
-        Read a specific cell from a sheet using pandas.
+        Extract fields from a field group (standard/retail/supplier).
 
         Args:
-            sheet_name: Name of the Excel sheet
-            cell: Cell reference (e.g., 'B5', 'C10')
+            field_group: Dictionary containing the field group configuration
+            group_name: Name of the group (for error messages)
 
         Returns:
-            The value in the specified cell
+            Dictionary of extracted field values
         """
-        # Read the specific sheet
-        df = pd.read_excel(
-            self.excel_path,
-            sheet_name=sheet_name,
-            header=None  # Don't treat first row as header
-        )
+        if not field_group:
+            return {}
 
-        # Parse cell reference (e.g., 'B5' -> column 1, row 4)
-        col_letter = ''.join(c for c in cell if c.isalpha()).upper()
-        row_number = int(''.join(c for c in cell if c.isdigit()))
+        data = {}
 
-        # Convert column letter to index (A=0, B=1, etc.)
-        col_index = self._column_letter_to_index(col_letter)
-        row_index = row_number - 1  # pandas uses 0-based indexing
+        # Get the default sheet for this group
+        default_sheet = field_group.get('sheet')
 
-        # Get the value
-        value = df.iloc[row_index, col_index]
+        # Process each field in the group
+        for field_name, field_config in field_group.items():
+            # Skip the 'sheet' key itself
+            if field_name == 'sheet':
+                continue
 
-        return value
+            if not isinstance(field_config, dict):
+                continue
 
-    def _column_letter_to_index(self, letter):
-        """
-        Convert Excel column letter to 0-based index.
-        A -> 0, B -> 1, Z -> 25, AA -> 26, etc.
-        """
-        result = 0
-        for char in letter:
-            result = result * 26 + (ord(char) - ord('A') + 1)
-        return result - 1
+            try:
+                # Get the sheet name (use field-specific or fall back to group default)
+                sheet = field_config.get('sheet', default_sheet)
+                cell = field_config.get('cell')
+
+                # Check if this is a row count field (ends with _req or _prev_req)
+                if field_name.endswith('_req'):
+                    # Count rows in the sheet
+                    value = excel_utils.count_rows(self.excel_path, sheet)
+                    data[field_name] = value
+                    continue
+
+                # Skip fields with no cell configuration yet
+                if cell is None or cell == '':
+                    print(f"  Skipping '{field_name}': no cell configuration")
+                    data[field_name] = None
+                    continue
+
+                # Read the value from the column
+                value = excel_utils.read_column_value(self.excel_path, sheet, cell)
+
+                # Handle special field types
+                if field_name == 'month':
+                    # Parse date and format as "March"
+                    value = excel_utils.parse_month_from_date(value)
+                elif field_name == 'prev_month':
+                    # Parse date, subtract one month, and format as "February"
+                    value = excel_utils.parse_previous_month_from_date(value)
+
+                data[field_name] = value
+
+            except Exception as e:
+                print(f"  Warning: Error reading '{field_name}' from {group_name}: {e}")
+                data[field_name] = None
+
+        return data
 
     def _read_table(self, table_name, table_config):
         """
@@ -266,203 +263,10 @@ class ExcelReader:
         if table_config.get('format_values'):
             value_col = count_column if agg_type == 'count' else sum_column
             for row in result:
-                row[value_col] = self._format_table_value(
+                row[value_col] = excel_utils.format_table_value(
                     row[value_col],
                     table_config.get('value_format', {})
                 )
 
         return result
 
-    def _format_table_value(self, value, format_config):
-        """
-        Format a table value according to its configuration.
-
-        Args:
-            value: Raw value
-            format_config: Formatting configuration
-
-        Returns:
-            Formatted value
-        """
-        if pd.isna(value):
-            return ""
-
-        format_type = format_config.get('type', 'number')
-        decimals = format_config.get('decimals', 0)
-
-        if format_type == 'currency':
-            return f"${float(value):,.{decimals}f}"
-        elif format_type == 'percentage':
-            return f"{float(value):.{decimals}f}%"
-        elif format_type == 'number':
-            return f"{float(value):,.{decimals}f}"
-        else:
-            return str(value)
-
-    def _format_value(self, field_name, value):
-        """
-        Format a value according to its configuration.
-
-        Args:
-            field_name: Name of the field
-            value: Raw value from Excel
-
-        Returns:
-            Formatted value
-        """
-        formatting = self.config.get('formatting', {}).get(field_name, {})
-
-        if pd.isna(value):
-            return ""
-
-        format_type = formatting.get('type', 'text')
-        decimals = formatting.get('decimals', 2)
-
-        if format_type == 'currency':
-            return f"${float(value):,.{decimals}f}"
-        elif format_type == 'percentage':
-            return f"{float(value):.{decimals}f}%"
-        elif format_type == 'number':
-            return f"{float(value):,.{decimals}f}"
-        else:
-            return str(value)
-
-    def _execute_operation(self, field_name, field_config):
-        """
-        Execute an operation on Excel data.
-
-        Args:
-            field_name: Name of the field
-            field_config: Configuration for the operation
-
-        Returns:
-            Result of the operation
-        """
-        operation = field_config.get('operation')
-        sheet = field_config.get('sheet')
-
-        if operation == 'parse_month':
-            return self._op_parse_month(sheet, field_config)
-        elif operation == 'count_rows':
-            return self._op_count_rows(sheet, field_config)
-        elif operation == 'avg_date_diff':
-            return self._op_avg_date_diff(sheet, field_config)
-        elif operation == 'count_value':
-            return self._op_count_value(sheet, field_config)
-        else:
-            raise ValueError(f"Unknown operation: '{operation}' for field '{field_name}'")
-
-    def _op_parse_month(self, sheet, config):
-        """
-        Parse month from a date column.
-
-        Returns:
-            Month name (e.g., "November 2025")
-        """
-        column = config.get('column')
-
-        # Read the sheet
-        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
-
-        # Get column index
-        col_idx = self._column_letter_to_index(column)
-
-        # Read first non-null date value
-        for idx in range(len(df)):
-            value = df.iloc[idx, col_idx]
-            if not pd.isna(value):
-                # Try to parse as date
-                try:
-                    date = pd.to_datetime(value)
-                    return date.strftime("%B %Y")  # e.g., "November 2025"
-                except:
-                    continue
-
-        return "Unknown"
-
-    def _op_count_rows(self, sheet, config):
-        """
-        Count total rows in a sheet (excluding header).
-
-        Returns:
-            Number of rows
-        """
-        # Read the sheet
-        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=0)
-
-        # Count non-empty rows
-        return len(df.dropna(how='all'))
-
-    def _op_avg_date_diff(self, sheet, config):
-        """
-        Calculate average date difference between two date columns.
-        Ignores differences > max_days.
-
-        Returns:
-            Average difference in days (rounded to 1 decimal)
-        """
-        date_col_start = config.get('date_col_start')
-        date_col_end = config.get('date_col_end')
-        max_days = config.get('max_days', 999)
-
-        # Read the sheet
-        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
-
-        # Get column indices
-        start_col_idx = self._column_letter_to_index(date_col_start)
-        end_col_idx = self._column_letter_to_index(date_col_end)
-
-        differences = []
-
-        # Skip header row (row 0)
-        for idx in range(1, len(df)):
-            start_val = df.iloc[idx, start_col_idx]
-            end_val = df.iloc[idx, end_col_idx]
-
-            if pd.isna(start_val) or pd.isna(end_val):
-                continue
-
-            try:
-                start_date = pd.to_datetime(start_val)
-                end_date = pd.to_datetime(end_val)
-
-                # Calculate difference + 1 (as per requirement)
-                diff_days = (end_date - start_date).days + 1
-
-                # Ignore if > max_days
-                if diff_days <= max_days:
-                    differences.append(diff_days)
-            except:
-                continue
-
-        if not differences:
-            return 0.0
-
-        avg = sum(differences) / len(differences)
-        return round(avg, 1)
-
-    def _op_count_value(self, sheet, config):
-        """
-        Count occurrences of a specific value in a column.
-
-        Returns:
-            Count of matching values
-        """
-        column = config.get('column')
-        value = config.get('value')
-
-        # Read the sheet
-        df = pd.read_excel(self.excel_path, sheet_name=sheet, header=None)
-
-        # Get column index
-        col_idx = self._column_letter_to_index(column)
-
-        # Count matching values (case-insensitive)
-        count = 0
-        for idx in range(1, len(df)):  # Skip header
-            cell_value = df.iloc[idx, col_idx]
-            if not pd.isna(cell_value):
-                if str(cell_value).strip().lower() == value.lower():
-                    count += 1
-
-        return count

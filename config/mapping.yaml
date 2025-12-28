@@ -8,16 +8,13 @@ template_path: templates/report_template.pptx
 output_dir: output
 
 standard_excel_fields:
-  sheet: "Tickets ADUS Tickets crea...1"
+  sheet: "Tickets ADUS Tickets crea... 1"
 
   month:
-    cell: "B" # parse month from "Ticket Created - Date" column
-
-  prev_month: # prev month Excel file
-    cell: "B" # parse month from "Ticket Created - Date" column
+    cell: "Ticket created - Date" # parse month from "Ticket Created - Date" column
 
 retail_excel_fields:
-  sheet: "Tickets ADUS Tickets crea...1"
+  sheet: "Tickets ADUS Tickets crea... 1"
 
   re_req:
     cell: # simple count of rows in the sheet
@@ -33,19 +30,19 @@ retail_excel_fields:
     cell: # Difference between "N" and "B" + 1, same rules as above
 
   re_sat:
-    cell: "P" # count "good" 
+    cell: "Ticket satisfaction rating" # count "good" 
 
   re_prev_sat:
-    sheet: "P" # count "good"
+    sheet: "Ticket satisfaction rating" # count "good"
 
   re_sat_c:
-    cell: "P" # "good with comment"
+    cell: "Ticket satisfaction rating" # "good with comment"
   
   re_prev_sat_c:
-    cell: "P" # "good with comment"
+    cell: "Ticket satisfaction rating" # "good with comment"
 
 supplier_excel_fields:
-  sheet: "Tickets ADUS Tickets crea...2"
+  sheet: "Tickets ADUS Tickets crea... 2"
 
   su_req:
     cell: # simple count of rows
@@ -60,29 +57,29 @@ supplier_excel_fields:
     cell: # Difference between "N" and "B" + 1, same rules as above
 
   su_sat:
-    cell: "P" # count "good" instances
+    cell: "Ticket satisfaction rating" # count "good" instances
 
   su_sat_c:
-    cell: "P" # count "good with comment" instances
+    cell: "Ticket satisfaction rating" # count "good with comment" instances
 
   su_prev_sat: # prev month
-    cell: "P" # count "good" instances
+    cell: "Ticket satisfaction rating" # count "good" instances
 
   su_prev_sat_c:
-    cell: "P" # count "good with comment" instances
+    cell: "Ticket satisfaction rating" # count "good with comment" instances
 
 # Dynamic table mappings
 # Tables read multiple rows from Excel and populate PowerPoint tables
 table_fields:
   # Example: Support categories table with aggregation
   re_sup_cat:
-    sheet: "Tickets ADUS Tickets crea...1"
+    sheet: "Tickets ADUS Tickets crea... 1"
     start_row: 2  # First row of data (1-indexed)
 
     # Columns to read from Excel
     columns:
       - name: "re_cat"              # This becomes the field name for placeholders
-        col: "W"
+        col: "Support Category"
 
     # Aggregation settings
     aggregate: true                 # Enable aggregation
@@ -98,13 +95,13 @@ table_fields:
 
   # Support categories table (SU)
   su_sup_cat:
-    sheet: "Tickets ADUS Tickets crea...2"
+    sheet: "Tickets ADUS Tickets crea... 2"
     start_row: 2  # First row of data (1-indexed)
 
     # Columns to read from Excel
     columns:
       - name: "su_cat"              # This becomes the field name for placeholders
-        col: "W"
+        col: "Support Category"
 
     # Aggregation settings
     aggregate: true                 # Enable aggregation
@@ -118,27 +115,27 @@ table_fields:
       type: "number"
       decimals: 0
 
-  # Top organizations table
-  top_orgs:
-    sheet: "Organizations"
-    start_row: 2  # First row of data (1-indexed) - UPDATE THIS
+  # Top organizations table - might require reading from both supplier and retailer sides
+  # top_orgs:
+  #   sheet: "Organizations"
+  #   start_row: 2  # First row of data (1-indexed) - UPDATE THIS
 
-    # Columns to read from Excel
-    columns:
-      - name: "org_name"            # This becomes the field name for placeholders
-        col: "M"
+  #   # Columns to read from Excel
+  #   columns:
+  #     - name: "org_name"            # This becomes the field name for placeholders
+  #       col: "Ticket organisation name"
 
-    # Aggregation settings
-    aggregate: true                 # Enable aggregation
-    aggregation_type: "count"       # Count occurrences (not summing a column)
-    group_by: "org_name"            # Group by this column
-    count_column: "org_count"       # Name for the count field in output
+  #   # Aggregation settings
+  #   aggregate: true                 # Enable aggregation
+  #   aggregation_type: "count"       # Count occurrences (not summing a column)
+  #   group_by: "org_name"            # Group by this column
+  #   count_column: "org_count"       # Name for the count field in output
 
-    # Optional: Format the aggregated values
-    format_values: true
-    value_format:
-      type: "number"
-      decimals: 0
+  #   # Optional: Format the aggregated values
+  #   format_values: true
+  #   value_format:
+  #     type: "number"
+  #     decimals: 0
 
   # Example: Simple table without aggregation
   # monthly_metrics:
