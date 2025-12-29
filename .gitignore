@@ -125,4 +125,5 @@ output/history/*.json
 !output/history/.gitkeep
 data/
 
-.claude/
+# Claude
+.claude/*.local*

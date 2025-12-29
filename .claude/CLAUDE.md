@@ -1,7 +1,7 @@
 # CS Reporter - Project Status
 
-**Last Updated:** December 3, 2025
-**Status:** Core implementation complete, ready for testing with real data
+**Last Updated:** December 29, 2025
+**Status:** Restructured implementation, simplified field extraction approach
 
 ---
 
@@ -17,26 +17,45 @@ CS Reporter is a Python utility that:
 
 ---
 
-## What's Been Implemented
+## Recent Changes (Dec 29, 2025)
 
-### ✅ Core Features Complete
+### 🔄 Major Restructuring
 
-1. **Custom Excel Operations**
-   - `parse_month`: Extract month from date columns
-   - `count_rows`: Count total rows in a sheet
-   - `avg_date_diff`: Calculate average date differences (with max threshold)
-   - `count_value`: Count occurrences of specific text values
+1. **Configuration Structure Changed**
+   - **OLD:** Used `excel_fields`, `current_month_fields`, `previous_month_fields` with operation-based approach
+   - **NEW:** Organized into `standard_excel_fields`, `retail_excel_fields`, `supplier_excel_fields`
+   - Simpler, more intuitive grouping by category
+   - Field-specific logic based on naming conventions
 
-2. **Dynamic Tables with Aggregation**
+2. **Removed Legacy Systems**
+   - Removed operation-based field extraction (`parse_month`, `count_rows`, `avg_date_diff`, `count_value` operations)
+   - Removed previous month history management (will re-implement if needed)
+   - Simplified `excel_reader.py` by removing unused methods
+
+3. **New Utility Module**
+   - Created `src/excel_utils.py` for all Excel helper functions
+   - Separates utility functions from main reader logic
+   - Easier to extend with new operations
+
+### ✅ Currently Implemented Features
+
+1. **Field Extraction by Category**
+   - `standard_excel_fields`: Common fields like month, prev_month
+   - `retail_excel_fields`: Retail-specific metrics (re_req, re_sat, etc.)
+   - `supplier_excel_fields`: Supplier-specific metrics (su_req, su_sat, etc.)
+   - Each category has a default sheet that fields inherit
+
+2. **Smart Field Processing**
+   - **Month fields**: Automatically parsed from date columns (e.g., "December")
+   - **Previous month**: Automatically calculated (e.g., "November")
+   - **Row count fields**: Fields ending in `_req` auto-count rows
+   - **Column reading**: Reads first non-null value from named columns
+
+3. **Dynamic Tables with Aggregation**
    - Auto-populate PowerPoint tables with variable rows
    - Count aggregation: Group and count occurrences
    - Sum aggregation: Group and sum numeric values
    - Column header search (no hardcoded column letters)
-
-3. **History Management**
-   - Automatic saving of extracted data to `output/history/YYYY-MM.json`
-   - Automatic loading of previous month data
-   - Graceful fallback to manual file selection on first run
 
 4. **Template-Based PowerPoint Generation**
    - Placeholder replacement: `{{field_name}}` → actual values
@@ -48,6 +67,17 @@ CS Reporter is a Python utility that:
    - Automatic file dialogs for Excel selection
    - Clear progress indicators
 
+### 🔧 Technical Improvements
+
+1. **Fixed Installation Issues**
+   - Resolved tkinter dependency on macOS (Homebrew Python)
+   - Recreated virtual environment with proper Python version
+
+2. **Code Organization**
+   - Utility functions separated into `excel_utils.py`
+   - Cleaner `excel_reader.py` focused on orchestration
+   - Better separation of concerns
+
 ---
 
 ## Project Structure
@@ -56,19 +86,20 @@ CS Reporter is a Python utility that:
 cs-reporter/
 ├── src/
 │   ├── __init__.py
-│   ├── main.py              # CLI entry point with dual file handling
-│   ├── excel_reader.py      # Excel operations and table reading
+│   ├── main.py              # CLI entry point with file dialogs
+│   ├── excel_reader.py      # Excel field extraction orchestration
+│   ├── excel_utils.py       # Excel utility functions (NEW)
 │   ├── ppt_writer.py        # PowerPoint generation
 │   ├── config.py            # Configuration loader
-│   └── history.py           # History management (NEW)
+│   └── history.py           # History management
 ├── templates/
-│   └── report_template.pptx.key  # YOUR TEMPLATE (needs setup)
+│   └── report_template.pptx # PowerPoint template
 ├── config/
-│   ├── mapping.yaml         # YOUR CONFIG (needs customization)
-│   └── mapping.yaml.example # Reference example
+│   ├── mapping.yaml         # Current configuration
+│   └── mapping.yaml.example # Reference example (outdated)
 ├── output/
 │   ├── .gitkeep
-│   └── history/             # Auto-saved monthly data (NEW)
+│   └── history/             # Auto-saved monthly data
 │       └── .gitkeep
 ├── requirements.txt
 ├── setup.py
@@ -80,54 +111,57 @@ cs-reporter/
 
 ## Configuration Format
 
-Your `config/mapping.yaml` should have three main sections:
+Your `config/mapping.yaml` now has four main sections:
 
-### 1. Current Month Fields
+### 1. Standard Excel Fields
 
-Operations to extract from the current month Excel file:
+Common fields shared across sheets:
 
 ```yaml
-current_month_fields:
+standard_excel_fields:
+  sheet: "Tickets ADUS Tickets crea... 1"  # Default sheet for this group
+
   month:
-    sheet: "Tickets ADUS Tickets crea...1"
-    operation: "parse_month"
-    column: "B"
+    cell: "Ticket created - Date"  # Column header name
+
+  prev_month:
+    cell: "Ticket created - Date"  # Automatically calculates previous month
+```
+
+### 2. Retail Excel Fields
+
+Retail-specific metrics:
+
+```yaml
+retail_excel_fields:
+  sheet: "Tickets ADUS Tickets crea... 1"  # Default sheet
 
   re_req:
-    sheet: "Tickets ADUS Tickets crea...1"
-    operation: "count_rows"
-
-  re_reso:
-    sheet: "Tickets ADUS Tickets crea...1"
-    operation: "avg_date_diff"
-    date_col_start: "B"
-    date_col_end: "N"
-    max_days: 3
+    # No cell needed - auto-counts rows (field ends with _req)
 
   re_sat:
-    sheet: "Tickets ADUS Tickets crea...1"
-    operation: "count_value"
-    column: "P"
-    value: "good"
+    cell: "Ticket satisfaction rating"  # Column to read from
+
+  re_sat_c:
+    cell: "Ticket satisfaction rating"
 ```
 
-### 2. Previous Month Fields
+### 3. Supplier Excel Fields
 
-Maps to historical data (no Excel operations needed):
+Supplier-specific metrics:
 
 ```yaml
-previous_month_fields:
-  prev_month:
-    source: "month"
+supplier_excel_fields:
+  sheet: "Tickets ADUS Tickets crea... 2"  # Default sheet
 
-  re_prev_req:
-    source: "re_req"
+  su_req:
+    # No cell needed - auto-counts rows
 
-  re_prev_reso:
-    source: "re_reso"
+  su_sat:
+    cell: "Ticket satisfaction rating"
 ```
 
-### 3. Dynamic Tables
+### 4. Dynamic Tables
 
 ```yaml
 table_fields:
@@ -147,7 +181,55 @@ table_fields:
 
 ---
 
-## Next Steps (When You Return)
+## What's Working Now
+
+### ✅ Implemented
+- `{{month}}` - Extracts month name from "Ticket created - Date" column (e.g., "December")
+- `{{prev_month}}` - Calculates previous month (e.g., "November")
+- `{{re_req}}` - Counts rows in retail sheet
+- `{{su_req}}` - Counts rows in supplier sheet
+- `{{re_prev_req}}` - Counts rows in retail sheet (same as re_req for now)
+- `{{su_prev_req}}` - Counts rows in supplier sheet (same as su_req for now)
+- Dynamic tables (`re_sup_cat`, `su_sup_cat`) with aggregation
+
+### 🚧 Not Yet Implemented
+- `{{re_reso}}`, `{{su_reso}}` - Average date difference calculations
+- `{{re_sat}}`, `{{su_sat}}` - Count "good" satisfaction ratings
+- `{{re_sat_c}}`, `{{su_sat_c}}` - Count "good with comment" ratings
+- `{{re_prev_reso}}`, `{{su_prev_reso}}` - Previous month resolution times
+- `{{re_prev_sat}}`, `{{su_prev_sat}}` - Previous month satisfaction counts
+- Previous month history tracking (currently all prev_ fields read from current month)
+- Top organizations table
+
+## Next Steps
+
+### Immediate Tasks
+
+1. **Implement remaining field types:**
+   - Date difference calculations (for `re_reso`, `su_reso`)
+   - Value counting (for satisfaction fields)
+   - These will need new utility functions in `excel_utils.py`
+
+2. **Test with real data:**
+   ```bash
+   source .venv/bin/activate
+   reporter
+   ```
+
+3. **Verify template:**
+   - Ensure `report_template.pptx` has all placeholders
+   - Test PowerPoint generation
+
+### Future Enhancements
+
+- Re-implement history management for true previous month data
+- Add error handling for missing columns
+- Add validation for sheet names
+- Support for more aggregation types
+
+---
+
+## Legacy Documentation (Pre-Dec 29, 2025)
 
 ### Step 1: Verify Installation
 
@@ -344,49 +426,57 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 
 ---
 
-## Quick Reference: Operations
+## Quick Reference: Field Types
 
-| Operation | Purpose | Required Config |
-|-----------|---------|----------------|
-| `parse_month` | Extract month from date column | `sheet`, `column` |
-| `count_rows` | Count total rows | `sheet` |
-| `avg_date_diff` | Average date difference | `sheet`, `date_col_start`, `date_col_end`, `max_days` |
-| `count_value` | Count text occurrences | `sheet`, `column`, `value` |
+| Field Pattern | Behavior | Example |
+|---------------|----------|---------|
+| `month` | Parses first date in column, returns month name | "December" |
+| `prev_month` | Parses first date, returns previous month name | "November" |
+| `*_req` | Counts rows in sheet | `re_req` → 150 |
+| Other fields | Reads first non-null value from column | Uses `cell` config |
+
+## Utility Functions (excel_utils.py)
+
+| Function | Purpose |
+|----------|---------|
+| `count_rows()` | Count data rows in sheet (excluding header) |
+| `read_column_value()` | Read first non-null value from column |
+| `parse_month_from_date()` | Extract month name from date |
+| `parse_previous_month_from_date()` | Calculate and return previous month name |
+| `format_table_value()` | Format values (currency, percentage, number) |
 
 ---
 
-## Files Modified/Created Since Start
+## Files Modified This Session (Dec 29, 2025)
 
 ### New Files
-- `src/history.py` - History management
-- `config/mapping.yaml.example` - Configuration reference
-- `output/history/.gitkeep` - History directory marker
-- `PROJECT_STATUS.md` - This file
+- `src/excel_utils.py` - Utility functions for Excel operations
 
 ### Modified Files
-- `src/excel_reader.py` - Added operations, previous month support
-- `src/main.py` - Dual file handling, history integration
-- `src/config.py` - Support for new config structure
-- `config/mapping.yaml` - Updated by you (needs more updates)
-- `.gitignore` - Added history files
+- `src/excel_reader.py` - Complete restructure, removed legacy operations
+- `src/config.py` - Updated validation for new field structure
+- `config/mapping.yaml` - Reorganized into category-based structure
+- `templates/report_template.pptx` - Converted from Keynote format
+- `PROJECT_STATUS.md` - This update
 
-### Files Provided by You
-- `templates/report_template.pptx.key` - Template (needs conversion)
+### Environment Changes
+- Installed `python-tk@3.13` via Homebrew
+- Recreated virtual environment with tkinter support
 
 ---
 
-## When You're Ready to Proceed
+## Session Progress
 
-1. ✅ Read this document
-2. ⬜ Convert template to `.pptx` format
-3. ⬜ Open one of your Excel files
-4. ⬜ Document the actual sheet names and column letters
-5. ⬜ Update `config/mapping.yaml` with real values
-6. ⬜ Add placeholders to PowerPoint template
-7. ⬜ Run `pip install -e .`
-8. ⬜ Test with: `reporter`
-9. ⬜ Check generated report in `output/`
-10. ⬜ Verify history saved to `output/history/`
+1. ✅ Fixed tkinter installation issue
+2. ✅ Converted template to `.pptx` format
+3. ✅ Restructured configuration to category-based approach
+4. ✅ Removed legacy operation-based system
+5. ✅ Created utility module for Excel functions
+6. ✅ Implemented month and prev_month parsing
+7. ✅ Implemented row counting for request fields
+8. ⬜ Implement date difference calculations
+9. ⬜ Implement value counting for satisfaction
+10. ⬜ Test full workflow with real data
 
 ---
 
