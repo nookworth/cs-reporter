@@ -1,7 +1,7 @@
 # CS Reporter - Project Status
 
-**Last Updated:** December 29, 2025
-**Status:** Restructured implementation, simplified field extraction approach
+**Last Updated:** January 3, 2026
+**Status:** Satisfaction fields implemented, ready for resolution time calculations
 
 ---
 
@@ -190,14 +190,15 @@ table_fields:
 - `{{su_req}}` - Counts rows in supplier sheet
 - `{{re_prev_req}}` - Counts rows in retail sheet (same as re_req for now)
 - `{{su_prev_req}}` - Counts rows in supplier sheet (same as su_req for now)
+- `{{re_sat}}`, `{{su_sat}}` - Count "good" satisfaction ratings (case-insensitive, exact match)
+- `{{re_sat_c}}`, `{{su_sat_c}}` - Count "good with comment" ratings (case-insensitive)
+- `{{re_prev_sat}}`, `{{su_prev_sat}}` - Count "good" in current month (prev history not implemented yet)
+- `{{re_prev_sat_c}}`, `{{su_prev_sat_c}}` - Count "good with comment" in current month (prev history not implemented yet)
 - Dynamic tables (`re_sup_cat`, `su_sup_cat`) with aggregation
 
 ### 🚧 Not Yet Implemented
 - `{{re_reso}}`, `{{su_reso}}` - Average date difference calculations
-- `{{re_sat}}`, `{{su_sat}}` - Count "good" satisfaction ratings
-- `{{re_sat_c}}`, `{{su_sat_c}}` - Count "good with comment" ratings
 - `{{re_prev_reso}}`, `{{su_prev_reso}}` - Previous month resolution times
-- `{{re_prev_sat}}`, `{{su_prev_sat}}` - Previous month satisfaction counts
 - Previous month history tracking (currently all prev_ fields read from current month)
 - Top organizations table
 
@@ -207,8 +208,7 @@ table_fields:
 
 1. **Implement remaining field types:**
    - Date difference calculations (for `re_reso`, `su_reso`)
-   - Value counting (for satisfaction fields)
-   - These will need new utility functions in `excel_utils.py`
+   - These will need a new utility function in `excel_utils.py`
 
 2. **Test with real data:**
    ```bash
@@ -433,6 +433,8 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 | `month` | Parses first date in column, returns month name | "December" |
 | `prev_month` | Parses first date, returns previous month name | "November" |
 | `*_req` | Counts rows in sheet | `re_req` → 150 |
+| `*_sat_c` | Counts "good with comment" values in column | `re_sat_c` → 25 |
+| `*_sat` | Counts "good" values in column (exact match) | `re_sat` → 42 |
 | Other fields | Reads first non-null value from column | Uses `cell` config |
 
 ## Utility Functions (excel_utils.py)
@@ -443,39 +445,46 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 | `read_column_value()` | Read first non-null value from column |
 | `parse_month_from_date()` | Extract month name from date |
 | `parse_previous_month_from_date()` | Calculate and return previous month name |
+| `count_column_value()` | Count occurrences of specific value in column (case-insensitive) |
 | `format_table_value()` | Format values (currency, percentage, number) |
 
 ---
 
-## Files Modified This Session (Dec 29, 2025)
+## Files Modified
 
-### New Files
+### Session Dec 29, 2025
+**New Files:**
 - `src/excel_utils.py` - Utility functions for Excel operations
 
-### Modified Files
+**Modified Files:**
 - `src/excel_reader.py` - Complete restructure, removed legacy operations
 - `src/config.py` - Updated validation for new field structure
 - `config/mapping.yaml` - Reorganized into category-based structure
 - `templates/report_template.pptx` - Converted from Keynote format
-- `PROJECT_STATUS.md` - This update
 
-### Environment Changes
+**Environment Changes:**
 - Installed `python-tk@3.13` via Homebrew
 - Recreated virtual environment with tkinter support
+
+### Session Jan 3, 2026
+**Modified Files:**
+- `src/excel_utils.py` - Added `count_column_value()` function for satisfaction ratings
+- `src/excel_reader.py` - Added detection and handling of `_sat` and `_sat_c` fields
+- `.claude/CLAUDE.md` - Updated documentation
 
 ---
 
 ## Session Progress
 
-1. ✅ Fixed tkinter installation issue
-2. ✅ Converted template to `.pptx` format
-3. ✅ Restructured configuration to category-based approach
-4. ✅ Removed legacy operation-based system
-5. ✅ Created utility module for Excel functions
-6. ✅ Implemented month and prev_month parsing
-7. ✅ Implemented row counting for request fields
-8. ⬜ Implement date difference calculations
-9. ⬜ Implement value counting for satisfaction
+1. ✅ Fixed tkinter installation issue (Dec 29)
+2. ✅ Converted template to `.pptx` format (Dec 29)
+3. ✅ Restructured configuration to category-based approach (Dec 29)
+4. ✅ Removed legacy operation-based system (Dec 29)
+5. ✅ Created utility module for Excel functions (Dec 29)
+6. ✅ Implemented month and prev_month parsing (Dec 29)
+7. ✅ Implemented row counting for request fields (Dec 29)
+8. ✅ Implemented value counting for satisfaction fields (Jan 3)
+9. ⬜ Implement date difference calculations
 10. ⬜ Test full workflow with real data
 
 ---

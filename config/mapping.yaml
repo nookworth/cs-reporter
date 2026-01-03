@@ -10,68 +10,71 @@ output_dir: output
 standard_excel_fields:
   sheet: "Tickets ADUS Tickets crea... 1"
 
-  month:
+  month: # ✅ IMPLEMENTED - parses month name from date column. ⁉️ month field not working on title page
     cell: "Ticket created - Date" # parse month from "Ticket Created - Date" column
+
+  prev_month: # ✅ IMPLEMENTED - calculates previous month automatically
+    cell: "Ticket created - Date" # automatically calculates previous month
 
 retail_excel_fields:
   sheet: "Tickets ADUS Tickets crea... 1"
 
-  re_req:
+  re_req: # ✅ IMPLEMENTED - auto-counts rows
     cell: # simple count of rows in the sheet
 
-  re_prev_req: # prev month
+  re_prev_req: # ✅ IMPLEMENTED - auto-counts rows ⁉️ (reads current month for now)
     cell: # count rows
 
-  re_reso:
-    cell: # Difference between "N" and "B" + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
-          # e.g. 12/2/2025 - 12/2/2025 = 1, 12/3/2025 - 12/2/2025 = 2, etc. 
-  
-  re_prev_reso: # prev month
-    cell: # Difference between "N" and "B" + 1, same rules as above
+  re_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
+    cell: # "Ticket solved - Date" (N) - "Ticket created - Date" (B) + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
+          # e.g. 12/2/2025 - 12/2/2025 = 1, 12/3/2025 - 12/2/2025 = 2, etc.
 
-  re_sat:
-    cell: "Ticket satisfaction rating" # count "good" 
+  re_prev_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
+    cell: # Same rules as `re_reso`
 
-  re_prev_sat:
-    sheet: "Ticket satisfaction rating" # count "good"
+  re_sat: # ✅ IMPLEMENTED - counts "good" (case-insensitive, exact match)
+    cell: "Ticket satisfaction rating" # count "good"
 
-  re_sat_c:
+  re_prev_sat: # ✅ IMPLEMENTED - counts "good" ⁉️ (reads current month for now)
+    cell: "Ticket satisfaction rating" # count "good"
+
+  re_sat_c: # ✅ IMPLEMENTED - counts "good with comment" (case-insensitive)
     cell: "Ticket satisfaction rating" # "good with comment"
-  
-  re_prev_sat_c:
+
+  re_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" ⁉️ (reads current month for now)
     cell: "Ticket satisfaction rating" # "good with comment"
 
 supplier_excel_fields:
   sheet: "Tickets ADUS Tickets crea... 2"
 
-  su_req:
+  su_req: # ✅ IMPLEMENTED - auto-counts rows
     cell: # simple count of rows
 
-  su_prev_req: # prev month
+  su_prev_req: # ✅ IMPLEMENTED - auto-counts rows ⁉️ (reads current month for now)
     cell: # count rows
 
-  su_reso:
-    cell: # Difference between "N" and "B" + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
-  
-  su_prev_reso: # prev month
-    cell: # Difference between "N" and "B" + 1, same rules as above
+  su_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
+    cell: # Same rules as `re_reso`
 
-  su_sat:
+  su_prev_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
+    cell: # Same rules as `re_reso`
+
+  su_sat: # ✅ IMPLEMENTED - counts "good" (case-insensitive, exact match)
     cell: "Ticket satisfaction rating" # count "good" instances
 
-  su_sat_c:
+  su_sat_c: # ✅ IMPLEMENTED - counts "good with comment" (case-insensitive)
     cell: "Ticket satisfaction rating" # count "good with comment" instances
 
-  su_prev_sat: # prev month
+  su_prev_sat: # ✅ IMPLEMENTED - counts "good" ⁉️ (reads current month for now)
     cell: "Ticket satisfaction rating" # count "good" instances
 
-  su_prev_sat_c:
+  su_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" ⁉️ (reads current month for now)
     cell: "Ticket satisfaction rating" # count "good with comment" instances
 
 # Dynamic table mappings
 # Tables read multiple rows from Excel and populate PowerPoint tables
 table_fields:
-  # Example: Support categories table with aggregation
+  # ✅ IMPLEMENTED - Support categories table with aggregation ‼️ not filling in placeholder values correctly and not generating new rows
   re_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 1"
     start_row: 2  # First row of data (1-indexed)
@@ -93,7 +96,7 @@ table_fields:
       type: "number"
       decimals: 0
 
-  # Support categories table (SU)
+  # ✅ IMPLEMENTED - Support categories table (SU) ‼️ not filling in placeholder values correctly and not generating new rows
   su_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 2"
     start_row: 2  # First row of data (1-indexed)
@@ -115,7 +118,7 @@ table_fields:
       type: "number"
       decimals: 0
 
-  # Top organizations table - might require reading from both supplier and retailer sides
+  # 🚧 NOT IMPLEMENTED - Top organizations table - might require reading from both supplier and retailer sides
   # top_orgs:
   #   sheet: "Organizations"
   #   start_row: 2  # First row of data (1-indexed) - UPDATE THIS

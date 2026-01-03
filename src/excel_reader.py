@@ -99,6 +99,30 @@ class ExcelReader:
                     data[field_name] = value
                     continue
 
+                # Check if this is a satisfaction field
+                if field_name.endswith('_sat_c'):
+                    # Count "good with comment" values
+                    if cell is None or cell == '':
+                        print(f"  Skipping '{field_name}': no cell configuration")
+                        data[field_name] = None
+                        continue
+                    value = excel_utils.count_column_value(
+                        self.excel_path, sheet, cell, "good with comment"
+                    )
+                    data[field_name] = value
+                    continue
+                elif field_name.endswith('_sat'):
+                    # Count "good" values (but not "good with comment")
+                    if cell is None or cell == '':
+                        print(f"  Skipping '{field_name}': no cell configuration")
+                        data[field_name] = None
+                        continue
+                    value = excel_utils.count_column_value(
+                        self.excel_path, sheet, cell, "good"
+                    )
+                    data[field_name] = value
+                    continue
+
                 # Skip fields with no cell configuration yet
                 if cell is None or cell == '':
                     print(f"  Skipping '{field_name}': no cell configuration")

@@ -106,6 +106,38 @@ def parse_previous_month_from_date(date_value):
         return "Unknown"
 
 
+def count_column_value(excel_path, sheet_name, column_name, value_to_count):
+    """
+    Count occurrences of a specific value in a column.
+
+    Args:
+        excel_path: Path to the Excel file
+        sheet_name: Name of the Excel sheet
+        column_name: Column header name
+        value_to_count: The value to count (case-insensitive string comparison)
+
+    Returns:
+        Number of occurrences of the value
+    """
+    # Read the sheet with first row as header
+    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+
+    # Find the column by name
+    if column_name not in df.columns:
+        raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
+
+    # Get the column data and drop NaN values
+    column_data = df[column_name].dropna()
+
+    # Count occurrences (case-insensitive)
+    count = 0
+    for val in column_data:
+        if isinstance(val, str) and val.lower() == value_to_count.lower():
+            count += 1
+
+    return count
+
+
 def format_table_value(value, format_config):
     """
     Format a table value according to its configuration.

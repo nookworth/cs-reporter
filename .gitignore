@@ -125,5 +125,8 @@ output/history/*.json
 !output/history/.gitkeep
 data/
 
+# LibreOffice/OpenOffice lock files
+.~lock.*#
+
 # Claude
 .claude/*.local*
