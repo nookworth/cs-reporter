@@ -6,14 +6,11 @@ Opens a file dialog to select an Excel file, then generates a PowerPoint report.
 
 import sys
 import tkinter as tk
-from tkinter import filedialog, messagebox
-from pathlib import Path
-from datetime import datetime
+from tkinter import filedialog
 
 from .excel_reader import ExcelReader
 from .ppt_writer import PowerPointWriter
 from .config import load_config
-from .history import HistoryManager
 
 
 def select_excel_file(title="Select Excel Input File"):
