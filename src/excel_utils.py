@@ -200,9 +200,13 @@ def calculate_average_resolution_time(
         # add 1 day to diff following Leo's typical method
         normalized_diff = diff + datetime.timedelta(days=1)
 
-        if normalized_diff.days < 3:
+        if normalized_diff.days <= 3:
             total_days_included += 1
             total_resolution_time += normalized_diff.days
+
+    # Avoid division by zero if no valid data
+    if total_days_included == 0:
+        return 0
 
     return round(total_resolution_time / total_days_included, 2)
 

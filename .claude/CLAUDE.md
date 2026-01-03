@@ -217,11 +217,11 @@ table_fields:
 - `{{re_sat_c}}`, `{{su_sat_c}}` - Count "good with comment" ratings (case-insensitive)
 - `{{re_prev_sat}}`, `{{su_prev_sat}}` - Count "good" FROM PREVIOUS MONTH FILE
 - `{{re_prev_sat_c}}`, `{{su_prev_sat_c}}` - Count "good with comment" FROM PREVIOUS MONTH FILE
+- `{{re_reso}}`, `{{su_reso}}` - Average resolution time (filters <= 3 days)
+- `{{re_prev_reso}}`, `{{su_prev_reso}}` - Average resolution time FROM PREVIOUS MONTH FILE
 - Dynamic tables (`re_sup_cat`, `su_sup_cat`) with aggregation
 
 ### 🚧 Not Yet Implemented
-- `{{re_reso}}`, `{{su_reso}}` - Average date difference calculations
-- `{{re_prev_reso}}`, `{{su_prev_reso}}` - Previous month resolution times
 - Top organizations table
 
 ### 📦 WIP / Not Currently Used
@@ -232,20 +232,15 @@ table_fields:
 
 ### Critical Bugs to Fix
 
-1. **Fix month field on title page**
-   - Investigate why `{{month}}` isn't being replaced on title slide
-   - Check `ppt_writer.py` title slide handling
-
-2. **Fix dynamic table population**
+1. **Fix dynamic table population**
    - Debug `re_sup_cat` and `su_sup_cat` table generation
    - Ensure placeholders are being replaced correctly
    - Verify new rows are being created
 
 ### Immediate Tasks
 
-1. **Implement remaining field types:**
-   - Date difference calculations (for `re_reso`, `su_reso`)
-   - These will need a new utility function in `excel_utils.py`
+1. **~~Implement remaining field types~~** ✅ DONE
+   - ~~Date difference calculations~~ Implemented as `calculate_average_resolution_time()`
 
 2. **Test with real data:**
    ```bash
@@ -399,20 +394,25 @@ Your Excel files should have:
 
 ### Current Bugs (Jan 3, 2026)
 
-1. **Month field not working on title page**
-   - The `{{month}}` placeholder is not being replaced on the title page
-   - Works fine on other slides
-   - Need to investigate PowerPoint title slide handling
-
-2. **Dynamic tables not populating correctly**
+1. **Dynamic tables not populating correctly**
    - `re_sup_cat` and `su_sup_cat` tables are implemented but:
      - Placeholder values not being filled in correctly
      - Not generating new rows as expected
    - Need to debug the table population logic in `ppt_writer.py`
 
-3. **~~Previous month fields read current month data~~** ✅ FIXED (Jan 3)
+### Fixed Bugs (Jan 3, 2026)
+
+1. **~~Month field not working on title page~~** ✅ FIXED
+   - Was caused by PowerPoint splitting `{{month}}` across multiple text runs
+   - Fixed by the split placeholder handler in `ppt_writer.py`
+
+2. **~~Previous month fields read current month data~~** ✅ FIXED
    - All `*_prev_*` fields now correctly read from the previous month Excel file
    - Changed architecture to always require both files instead of history management
+
+3. **~~Some placeholders not being replaced~~** ✅ FIXED
+   - PowerPoint splits placeholders across multiple "runs" (e.g., `"{{re_"` + `"sat}}"`)
+   - Fixed by reconstructing full paragraph text before searching for placeholders
 
 ### Common Template Mistakes
 
@@ -522,6 +522,7 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 | `*_req` | Counts rows in sheet | `re_req` → 150 |
 | `*_sat_c` | Counts "good with comment" values in column | `re_sat_c` → 25 |
 | `*_sat` | Counts "good" values in column (exact match) | `re_sat` → 42 |
+| `*_reso` | Average resolution time (filters <= 3 days) | `re_reso` → 1.85 |
 | Other fields | Reads first non-null value from column | Uses `cell` config |
 
 ## Utility Functions (excel_utils.py)
@@ -533,6 +534,7 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 | `parse_month_from_date()` | Extract month name from date |
 | `parse_previous_month_from_date()` | Calculate and return previous month name |
 | `count_column_value()` | Count occurrences of specific value in column (case-insensitive) |
+| `calculate_average_resolution_time()` | Calculate average (solved - created) + 1, filtered to <= 3 days |
 | `format_table_value()` | Format values (currency, percentage, number) |
 
 ---
@@ -559,15 +561,17 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 - `src/excel_reader.py` - Added dual-file support, smart field routing based on `_prev_` in field name
 
 **Feature Implementation:**
-- `src/excel_utils.py` - Added `count_column_value()` function for satisfaction ratings
-- `src/excel_reader.py` - Added detection and handling of `_sat` and `_sat_c` fields
+- `src/excel_utils.py` - Added `count_column_value()` for satisfaction ratings
+- `src/excel_utils.py` - Added `calculate_average_resolution_time()` for resolution time metrics
+- `src/excel_reader.py` - Added detection and handling of `_sat`, `_sat_c`, and `_reso` fields
 
 **Bug Fixes:**
 - `src/ppt_writer.py` - Fixed placeholder replacement to handle PowerPoint's split text runs
 - `src/ppt_writer.py` - Added debug output showing which fields were/weren't replaced
+- `src/excel_utils.py` - Added division by zero protection in `calculate_average_resolution_time()`
 
 **Documentation:**
-- `config/mapping.yaml` - Updated comments to reflect dual-file architecture
+- `config/mapping.yaml` - Updated comments to reflect dual-file architecture and implemented fields
 - `.gitignore` - Added LibreOffice lock files (`.~lock.*#`)
 - `.claude/CLAUDE.md` - Updated for new architecture, features, and common template mistakes
 
@@ -587,9 +591,9 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 10. ✅ Previous month fields now correctly read from previous Excel file (Jan 3)
 11. ✅ Fixed PowerPoint placeholder replacement to handle split text runs (Jan 3)
 12. ✅ Added debug output for replaced/unreplaced fields (Jan 3)
-13. ⬜ Fix month field on title page
-14. ⬜ Fix dynamic table population
-15. ⬜ Implement date difference calculations
+13. ✅ Implemented resolution time calculation (filters <= 3 days) (Jan 3)
+14. ✅ Month field on title page now working (fixed by split placeholder handler) (Jan 3)
+15. ⬜ Fix dynamic table population
 16. ⬜ Test full workflow with real data
 
 ---

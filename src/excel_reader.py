@@ -157,12 +157,12 @@ class ExcelReader:
 
                 if field_name.endswith("_reso"):
                     print(
-                        f" Reading '{field_name}' from {'previous' if is_prev_field else 'current'} month file, sheet '{sheet}'"
+                        f"  Reading '{field_name}' from {'previous' if is_prev_field else 'current'} month file, sheet '{sheet}'"
                     )
                     value = excel_utils.calculate_average_resolution_time(
                         excel_path, sheet
                     )
-                    print(f"  → Found {value} average resolution time")
+                    print(f"  → Found {value} days average resolution time")
                     data[field_name] = value
                     continue
 
