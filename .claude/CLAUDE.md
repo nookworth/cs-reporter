@@ -1,23 +1,46 @@
 # CS Reporter - Project Status
 
 **Last Updated:** January 3, 2026
-**Status:** Satisfaction fields implemented, ready for resolution time calculations
+**Status:** Dual-file architecture implemented, satisfaction fields working
 
 ---
 
 ## Project Overview
 
 CS Reporter is a Python utility that:
-- Reads data from Excel files using custom operations
+- Reads data from TWO Excel files (current month and previous month)
 - Generates PowerPoint presentations using a template
-- Automatically tracks month-over-month data with history management
 - Supports dynamic tables with aggregation
+- Provides month-over-month comparison by reading both files
 
-**Primary Use Case:** Monthly support ticket reporting with automatic historical comparison
+**Primary Use Case:** Monthly support ticket reporting with automatic comparison
+
+**Architecture:** Always requires both current and previous month Excel files. No history management - simpler for development and debugging.
 
 ---
 
-## Recent Changes (Dec 29, 2025)
+## Recent Changes
+
+### January 3, 2026 - Dual-File Architecture
+
+**Major architectural change:** Simplified to always require both Excel files instead of history management.
+
+1. **Always Require Both Files**
+   - User now selects BOTH current and previous month Excel files every time
+   - No more history loading/saving (kept as WIP code for future)
+   - Much simpler for development and debugging
+
+2. **Smart Field Routing**
+   - Fields with `_prev_` in the name automatically read from previous month file
+   - Regular fields read from current month file
+   - Example: `re_req` → current file, `re_prev_req` → previous file
+
+3. **Implemented Satisfaction Fields**
+   - All `*_sat` and `*_sat_c` fields now working
+   - Count "good" and "good with comment" from Excel columns
+   - Case-insensitive matching
+
+### December 29, 2025 - Initial Restructuring
 
 ### 🔄 Major Restructuring
 
@@ -188,21 +211,35 @@ table_fields:
 - `{{prev_month}}` - Calculates previous month (e.g., "November")
 - `{{re_req}}` - Counts rows in retail sheet
 - `{{su_req}}` - Counts rows in supplier sheet
-- `{{re_prev_req}}` - Counts rows in retail sheet (same as re_req for now)
-- `{{su_prev_req}}` - Counts rows in supplier sheet (same as su_req for now)
+- `{{re_prev_req}}` - Counts rows in retail sheet FROM PREVIOUS MONTH FILE
+- `{{su_prev_req}}` - Counts rows in supplier sheet FROM PREVIOUS MONTH FILE
 - `{{re_sat}}`, `{{su_sat}}` - Count "good" satisfaction ratings (case-insensitive, exact match)
 - `{{re_sat_c}}`, `{{su_sat_c}}` - Count "good with comment" ratings (case-insensitive)
-- `{{re_prev_sat}}`, `{{su_prev_sat}}` - Count "good" in current month (prev history not implemented yet)
-- `{{re_prev_sat_c}}`, `{{su_prev_sat_c}}` - Count "good with comment" in current month (prev history not implemented yet)
+- `{{re_prev_sat}}`, `{{su_prev_sat}}` - Count "good" FROM PREVIOUS MONTH FILE
+- `{{re_prev_sat_c}}`, `{{su_prev_sat_c}}` - Count "good with comment" FROM PREVIOUS MONTH FILE
 - Dynamic tables (`re_sup_cat`, `su_sup_cat`) with aggregation
 
 ### 🚧 Not Yet Implemented
 - `{{re_reso}}`, `{{su_reso}}` - Average date difference calculations
 - `{{re_prev_reso}}`, `{{su_prev_reso}}` - Previous month resolution times
-- Previous month history tracking (currently all prev_ fields read from current month)
 - Top organizations table
 
+### 📦 WIP / Not Currently Used
+- History management system (code exists in `src/history.py` but is commented out in `src/main.py`)
+- Can be re-enabled in the future if needed
+
 ## Next Steps
+
+### Critical Bugs to Fix
+
+1. **Fix month field on title page**
+   - Investigate why `{{month}}` isn't being replaced on title slide
+   - Check `ppt_writer.py` title slide handling
+
+2. **Fix dynamic table population**
+   - Debug `re_sup_cat` and `su_sup_cat` table generation
+   - Ensure placeholders are being replaced correctly
+   - Verify new rows are being created
 
 ### Immediate Tasks
 
@@ -214,6 +251,9 @@ table_fields:
    ```bash
    source .venv/bin/activate
    reporter
+   # Select current month Excel file
+   # Select previous month Excel file
+   # Verify output
    ```
 
 3. **Verify template:**
@@ -222,10 +262,10 @@ table_fields:
 
 ### Future Enhancements
 
-- Re-implement history management for true previous month data
 - Add error handling for missing columns
 - Add validation for sheet names
 - Support for more aggregation types
+- Re-enable history management if needed (code exists in `src/history.py`)
 
 ---
 
@@ -357,6 +397,54 @@ Your Excel files should have:
 
 ## Known Issues & Considerations
 
+### Current Bugs (Jan 3, 2026)
+
+1. **Month field not working on title page**
+   - The `{{month}}` placeholder is not being replaced on the title page
+   - Works fine on other slides
+   - Need to investigate PowerPoint title slide handling
+
+2. **Dynamic tables not populating correctly**
+   - `re_sup_cat` and `su_sup_cat` tables are implemented but:
+     - Placeholder values not being filled in correctly
+     - Not generating new rows as expected
+   - Need to debug the table population logic in `ppt_writer.py`
+
+3. **~~Previous month fields read current month data~~** ✅ FIXED (Jan 3)
+   - All `*_prev_*` fields now correctly read from the previous month Excel file
+   - Changed architecture to always require both files instead of history management
+
+### Common Template Mistakes
+
+1. **Typos in Placeholder Names**
+   - ❌ Wrong: `{{re_prev_sat__c}}` (extra underscore)
+   - ✅ Correct: `{{re_prev_sat_c}}`
+   - The script now shows "Unreplaced fields" warnings to help catch these
+   - Check the console output after running to see if any placeholders weren't replaced
+
+2. **PowerPoint Split Placeholder Issue**
+   - PowerPoint often splits placeholders across multiple "text runs" internally
+   - This happens when you edit, copy/paste, or change formatting
+   - Example: `{{re_sat}}` might be stored as `"{{re_"` + `"sat}}"`
+   - **Fixed in Jan 3 update**: Script now handles split placeholders automatically
+   - Old versions would fail to find split placeholders
+
+3. **Case Sensitivity**
+   - Placeholder names are case-sensitive
+   - ❌ Wrong: `{{Re_Req}}` or `{{RE_REQ}}`
+   - ✅ Correct: `{{re_req}}`
+   - Must match exactly with config field names
+
+4. **Using Debug Output**
+   - After running, check console for:
+     ```
+     Replaced fields: month, re_req, re_sat, ...
+     ⚠ Unreplaced fields: some_typo_field
+     ```
+   - Unreplaced fields indicate typos or missing config
+
+### General Considerations
+
 1. **Sheet Name Truncation**: Excel sometimes shows truncated sheet names like "Tickets ADUS Tickets crea...1"
    - Find the full name by right-clicking the sheet tab
    - Or open Excel and read the full name from the status bar
@@ -370,15 +458,14 @@ Your Excel files should have:
    - Values > `max_days` are excluded from the average
    - Empty dates are skipped
 
-4. **First Month Setup**:
-   - First run requires BOTH current and previous month Excel files
-   - After that, only current month is needed
-   - History files are human-readable JSON in `output/history/`
+4. **Dual-File Requirement**:
+   - ALWAYS requires BOTH current and previous month Excel files
+   - No history management - simpler and more predictable
+   - History code still exists in `src/history.py` but is not currently used
 
 5. **Template File Extension**:
-   - Current template is `.pptx.key` (Keynote file?)
-   - Needs to be `.pptx` (PowerPoint format)
-   - Save as PowerPoint from Keynote if needed
+   - Template has been converted to `.pptx` format
+   - LibreOffice lock files (`.~lock.*#`) are now in `.gitignore`
 
 ---
 
@@ -467,10 +554,22 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 - Recreated virtual environment with tkinter support
 
 ### Session Jan 3, 2026
-**Modified Files:**
+**Architectural Changes:**
+- `src/main.py` - Changed to always prompt for both Excel files, disabled history management (kept as WIP)
+- `src/excel_reader.py` - Added dual-file support, smart field routing based on `_prev_` in field name
+
+**Feature Implementation:**
 - `src/excel_utils.py` - Added `count_column_value()` function for satisfaction ratings
 - `src/excel_reader.py` - Added detection and handling of `_sat` and `_sat_c` fields
-- `.claude/CLAUDE.md` - Updated documentation
+
+**Bug Fixes:**
+- `src/ppt_writer.py` - Fixed placeholder replacement to handle PowerPoint's split text runs
+- `src/ppt_writer.py` - Added debug output showing which fields were/weren't replaced
+
+**Documentation:**
+- `config/mapping.yaml` - Updated comments to reflect dual-file architecture
+- `.gitignore` - Added LibreOffice lock files (`.~lock.*#`)
+- `.claude/CLAUDE.md` - Updated for new architecture, features, and common template mistakes
 
 ---
 
@@ -484,8 +583,14 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 6. ✅ Implemented month and prev_month parsing (Dec 29)
 7. ✅ Implemented row counting for request fields (Dec 29)
 8. ✅ Implemented value counting for satisfaction fields (Jan 3)
-9. ⬜ Implement date difference calculations
-10. ⬜ Test full workflow with real data
+9. ✅ Changed architecture to dual-file (always require both Excel files) (Jan 3)
+10. ✅ Previous month fields now correctly read from previous Excel file (Jan 3)
+11. ✅ Fixed PowerPoint placeholder replacement to handle split text runs (Jan 3)
+12. ✅ Added debug output for replaced/unreplaced fields (Jan 3)
+13. ⬜ Fix month field on title page
+14. ⬜ Fix dynamic table population
+15. ⬜ Implement date difference calculations
+16. ⬜ Test full workflow with real data
 
 ---
 

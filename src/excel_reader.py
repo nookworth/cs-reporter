@@ -13,16 +13,17 @@ from . import excel_utils
 class ExcelReader:
     """Reads data from Excel files based on configuration mapping."""
 
-    def __init__(self, excel_path, config, previous_month_data=None):
+    def __init__(self, excel_path, config, previous_excel_path=None):
         """
         Initialize the Excel reader.
 
         Args:
-            excel_path: Path to the Excel file
+            excel_path: Path to the current month Excel file
             config: Configuration dictionary with field mappings
-            previous_month_data: Optional dictionary with previous month's data (currently unused)
+            previous_excel_path: Path to the previous month Excel file
         """
         self.excel_path = Path(excel_path)
+        self.previous_excel_path = Path(previous_excel_path) if previous_excel_path else None
         self.config = config
         self.table_fields = config.get('table_fields', {})
         self.standard_excel_fields = config.get('standard_excel_fields', {})
@@ -39,12 +40,15 @@ class ExcelReader:
         data = {}
 
         # Extract standard excel fields
+        print("\nExtracting standard fields...")
         data.update(self._extract_field_group(self.standard_excel_fields, 'standard'))
 
         # Extract retail excel fields
+        print("\nExtracting retail fields...")
         data.update(self._extract_field_group(self.retail_excel_fields, 'retail'))
 
         # Extract supplier excel fields
+        print("\nExtracting supplier fields...")
         data.update(self._extract_field_group(self.supplier_excel_fields, 'supplier'))
 
         # Extract table data
@@ -56,6 +60,9 @@ class ExcelReader:
                 raise ValueError(
                     f"Error reading table '{table_name}': {e}"
                 )
+
+        # Debug: Show all extracted field names
+        print(f"\nExtracted fields: {', '.join([k for k in data.keys() if not isinstance(data[k], list)])}")
 
         return data
 
@@ -92,10 +99,20 @@ class ExcelReader:
                 sheet = field_config.get('sheet', default_sheet)
                 cell = field_config.get('cell')
 
+                # Determine which Excel file to use
+                # Fields with 'prev' in the name use previous month file, others use current month
+                is_prev_field = '_prev_' in field_name
+                excel_path = self.previous_excel_path if is_prev_field and self.previous_excel_path else self.excel_path
+
+                if is_prev_field and not self.previous_excel_path:
+                    print(f"  Warning: '{field_name}' is a previous month field but no previous Excel file provided")
+                    data[field_name] = None
+                    continue
+
                 # Check if this is a row count field (ends with _req or _prev_req)
                 if field_name.endswith('_req'):
                     # Count rows in the sheet
-                    value = excel_utils.count_rows(self.excel_path, sheet)
+                    value = excel_utils.count_rows(excel_path, sheet)
                     data[field_name] = value
                     continue
 
@@ -106,9 +123,11 @@ class ExcelReader:
                         print(f"  Skipping '{field_name}': no cell configuration")
                         data[field_name] = None
                         continue
+                    print(f"  Reading '{field_name}' from {'previous' if is_prev_field else 'current'} month file, sheet '{sheet}', column '{cell}'")
                     value = excel_utils.count_column_value(
-                        self.excel_path, sheet, cell, "good with comment"
+                        excel_path, sheet, cell, "good with comment"
                     )
+                    print(f"  → Found {value} occurrences")
                     data[field_name] = value
                     continue
                 elif field_name.endswith('_sat'):
@@ -117,9 +136,11 @@ class ExcelReader:
                         print(f"  Skipping '{field_name}': no cell configuration")
                         data[field_name] = None
                         continue
+                    print(f"  Reading '{field_name}' from {'previous' if is_prev_field else 'current'} month file, sheet '{sheet}', column '{cell}'")
                     value = excel_utils.count_column_value(
-                        self.excel_path, sheet, cell, "good"
+                        excel_path, sheet, cell, "good"
                     )
+                    print(f"  → Found {value} occurrences")
                     data[field_name] = value
                     continue
 
@@ -130,7 +151,7 @@ class ExcelReader:
                     continue
 
                 # Read the value from the column
-                value = excel_utils.read_column_value(self.excel_path, sheet, cell)
+                value = excel_utils.read_column_value(excel_path, sheet, cell)
 
                 # Handle special field types
                 if field_name == 'month':

@@ -49,9 +49,6 @@ def main():
         print(f"✗ Error loading configuration: {e}")
         return 1
 
-    # Initialize history manager
-    history = HistoryManager()
-
     # Select current month Excel file
     print("\nPlease select CURRENT MONTH Excel file...")
     current_excel_path = select_excel_file("Select Current Month Excel File")
@@ -62,63 +59,35 @@ def main():
 
     print(f"✓ Selected: {current_excel_path}")
 
-    # Try to load previous month data from history
-    print("\nLooking for previous month data...")
-    previous_month_data = history.load_previous_month()
+    # Select previous month Excel file
+    print("\nPlease select PREVIOUS MONTH Excel file...")
+    previous_excel_path = select_excel_file("Select Previous Month Excel File")
 
-    if previous_month_data:
-        prev_month = previous_month_data.get('month', 'Unknown')
-        print(f"✓ Loaded previous month data: {prev_month}")
-    else:
-        print("✗ No history found")
+    if not previous_excel_path:
+        print("No file selected. Exiting.")
+        return 0
 
-        # Check if config requires previous month data
-        has_prev_month_fields = bool(config.get('previous_month_fields'))
+    print(f"✓ Selected: {previous_excel_path}")
 
-        if has_prev_month_fields:
-            print("\nPlease select PREVIOUS MONTH Excel file...")
-            print("(Press Cancel to skip previous month data)")
-
-            prev_excel_path = select_excel_file("Select Previous Month Excel File (Optional)")
-
-            if prev_excel_path:
-                print(f"✓ Selected: {prev_excel_path}")
-
-                # Extract data from previous month Excel
-                try:
-                    prev_reader = ExcelReader(prev_excel_path, config)
-                    previous_month_data = prev_reader.extract_data()
-                    print(f"✓ Extracted previous month data")
-                except Exception as e:
-                    print(f"✗ Error reading previous month Excel: {e}")
-                    print("  Continuing without previous month data...")
-                    previous_month_data = {}
-            else:
-                print("  Skipping previous month data")
-                previous_month_data = {}
-
-    # Read data from current month Excel
+    # Read data from both Excel files
     try:
-        reader = ExcelReader(current_excel_path, config, previous_month_data)
+        reader = ExcelReader(current_excel_path, config, previous_excel_path=previous_excel_path)
         data = reader.extract_data()
-        print(f"✓ Extracted {len(data)} fields from current month Excel")
+        print(f"✓ Extracted {len(data)} fields from Excel files")
     except Exception as e:
-        print(f"✗ Error reading Excel file: {e}")
+        print(f"✗ Error reading Excel files: {e}")
         return 1
 
-    # Save current month data to history
-    try:
-        month_str = history.get_month_from_data(data)
-        if month_str:
-            history_path = history.save_data(data, month_str)
-            print(f"✓ Saved history: {history_path}")
-        else:
-            # Fall back to current date
-            history_path = history.save_data(data)
-            print(f"✓ Saved history: {history_path}")
-    except Exception as e:
-        print(f"⚠ Warning: Could not save history: {e}")
-        print("  (Report will still be generated)")
+    # WIP: History management (disabled for now)
+    # This code is kept for future use but not currently active
+    # history = HistoryManager()
+    # try:
+    #     month_str = history.get_month_from_data(data)
+    #     if month_str:
+    #         history_path = history.save_data(data, month_str)
+    #         print(f"✓ Saved history: {history_path}")
+    # except Exception as e:
+    #     print(f"⚠ Warning: Could not save history: {e}")
 
     # Generate PowerPoint
     try:

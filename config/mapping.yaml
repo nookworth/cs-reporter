@@ -22,12 +22,13 @@ retail_excel_fields:
   re_req: # ✅ IMPLEMENTED - auto-counts rows
     cell: # simple count of rows in the sheet
 
-  re_prev_req: # ✅ IMPLEMENTED - auto-counts rows ⁉️ (reads current month for now)
+  re_prev_req: # ✅ IMPLEMENTED - auto-counts rows from previous month Excel file
     cell: # count rows
 
   re_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
-    cell: # "Ticket solved - Date" (N) - "Ticket created - Date" (B) + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
+    cell: # Step 1: For each row calculate the following: "Ticket solved - Date" (N) - "Ticket created - Date" (B) + 1. Ignore anything with resulting value over 3 since it typically requires engineering involvement
           # e.g. 12/2/2025 - 12/2/2025 = 1, 12/3/2025 - 12/2/2025 = 2, etc.
+          # Step 2: average the resulting values
 
   re_prev_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
     cell: # Same rules as `re_reso`
@@ -35,13 +36,13 @@ retail_excel_fields:
   re_sat: # ✅ IMPLEMENTED - counts "good" (case-insensitive, exact match)
     cell: "Ticket satisfaction rating" # count "good"
 
-  re_prev_sat: # ✅ IMPLEMENTED - counts "good" ⁉️ (reads current month for now)
+  re_prev_sat: # ✅ IMPLEMENTED - counts "good" from previous month Excel file
     cell: "Ticket satisfaction rating" # count "good"
 
   re_sat_c: # ✅ IMPLEMENTED - counts "good with comment" (case-insensitive)
     cell: "Ticket satisfaction rating" # "good with comment"
 
-  re_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" ⁉️ (reads current month for now)
+  re_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" from previous month Excel file
     cell: "Ticket satisfaction rating" # "good with comment"
 
 supplier_excel_fields:
@@ -50,7 +51,7 @@ supplier_excel_fields:
   su_req: # ✅ IMPLEMENTED - auto-counts rows
     cell: # simple count of rows
 
-  su_prev_req: # ✅ IMPLEMENTED - auto-counts rows ⁉️ (reads current month for now)
+  su_prev_req: # ✅ IMPLEMENTED - auto-counts rows from previous month Excel file
     cell: # count rows
 
   su_reso: # 🚧 NOT IMPLEMENTED - needs date difference calculation
@@ -65,10 +66,10 @@ supplier_excel_fields:
   su_sat_c: # ✅ IMPLEMENTED - counts "good with comment" (case-insensitive)
     cell: "Ticket satisfaction rating" # count "good with comment" instances
 
-  su_prev_sat: # ✅ IMPLEMENTED - counts "good" ⁉️ (reads current month for now)
+  su_prev_sat: # ✅ IMPLEMENTED - counts "good" from previous month Excel file
     cell: "Ticket satisfaction rating" # count "good" instances
 
-  su_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" ⁉️ (reads current month for now)
+  su_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" from previous month Excel file
     cell: "Ticket satisfaction rating" # count "good with comment" instances
 
 # Dynamic table mappings

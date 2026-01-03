@@ -68,19 +68,22 @@ class PowerPointWriter:
             Number of replacements made
         """
         replacements = 0
+        replaced_fields = set()
 
         # Separate table data from scalar data
         table_data = {k: v for k, v in data.items() if isinstance(v, list)}
         scalar_data = {k: v for k, v in data.items() if not isinstance(v, list)}
 
         # Iterate through all slides
-        for slide in presentation.slides:
+        for slide_idx, slide in enumerate(presentation.slides):
             # Iterate through all shapes in the slide
             for shape in slide.shapes:
                 if hasattr(shape, "text_frame"):
-                    replacements += self._replace_in_text_frame(
+                    count, fields = self._replace_in_text_frame(
                         shape.text_frame, scalar_data
                     )
+                    replacements += count
+                    replaced_fields.update(fields)
 
                 # Check tables
                 if shape.has_table:
@@ -92,9 +95,19 @@ class PowerPointWriter:
                         # Regular cell replacement for static tables
                         for row in shape.table.rows:
                             for cell in row.cells:
-                                replacements += self._replace_in_text_frame(
+                                count, fields = self._replace_in_text_frame(
                                     cell.text_frame, scalar_data
                                 )
+                                replacements += count
+                                replaced_fields.update(fields)
+
+        # Show which fields were replaced
+        print(f"  Replaced fields: {', '.join(sorted(replaced_fields))}")
+
+        # Show which fields were NOT replaced (might still be placeholders)
+        unreplaced = set(scalar_data.keys()) - replaced_fields
+        if unreplaced:
+            print(f"  ⚠ Unreplaced fields: {', '.join(sorted(unreplaced))}")
 
         return replacements
 
@@ -188,24 +201,54 @@ class PowerPointWriter:
         """
         Replace placeholders in a text frame.
 
+        Handles PowerPoint's tendency to split placeholders across multiple runs.
+
         Args:
             text_frame: python-pptx TextFrame object
             data: Dictionary of field names to values
 
         Returns:
-            Number of replacements made
+            Tuple of (number of replacements made, set of field names that were replaced)
         """
         replacements = 0
+        replaced_fields = set()
 
         for paragraph in text_frame.paragraphs:
-            for run in paragraph.runs:
-                original_text = run.text
+            # Skip empty paragraphs
+            if not paragraph.runs:
+                continue
 
-                # Replace all {{field_name}} patterns
-                for field_name, value in data.items():
-                    placeholder = f"{{{{{field_name}}}}}"
-                    if placeholder in run.text:
-                        run.text = run.text.replace(placeholder, str(value))
-                        replacements += 1
+            # Get the full paragraph text
+            full_text = ''.join(run.text for run in paragraph.runs)
 
-        return replacements
+            # Check if there are any placeholders in this paragraph
+            has_placeholder = False
+            for field_name in data.keys():
+                placeholder = f"{{{{{field_name}}}}}"
+                if placeholder in full_text:
+                    has_placeholder = True
+                    break
+
+            if not has_placeholder:
+                continue
+
+            # Replace all placeholders in the full text
+            new_text = full_text
+            for field_name, value in data.items():
+                placeholder = f"{{{{{field_name}}}}}"
+                if placeholder in new_text:
+                    new_text = new_text.replace(placeholder, str(value))
+                    replacements += 1
+                    replaced_fields.add(field_name)
+
+            # Clear all runs and set the new text in a single run
+            # This preserves the first run's formatting
+            first_run = paragraph.runs[0]
+            first_run.text = new_text
+
+            # Remove all other runs
+            for _ in range(len(paragraph.runs) - 1):
+                p = paragraph._element
+                p.remove(paragraph.runs[-1]._element)
+
+        return replacements, replaced_fields
