@@ -209,21 +209,29 @@ class PowerPointWriter:
                 # Set the cell text while preserving formatting
                 # Instead of cell.text = new_text (which clears formatting),
                 # we modify the first run and remove others
-                if cell.text_frame.paragraphs:
-                    paragraph = cell.text_frame.paragraphs[0]
-                    if paragraph.runs:
-                        # Set text in first run (preserves its formatting)
-                        first_run = paragraph.runs[0]
-                        first_run.text = new_text
-                        # Remove all other runs
-                        for _ in range(len(paragraph.runs) - 1):
-                            p = paragraph._element
-                            p.remove(paragraph.runs[-1]._element)
+                try:
+                    if cell.text_frame.paragraphs:
+                        paragraph = cell.text_frame.paragraphs[0]
+                        if paragraph.runs:
+                            # Set text in first run (preserves its formatting)
+                            first_run = paragraph.runs[0]
+                            first_run.text = new_text
+                            # Remove all other runs safely
+                            while len(paragraph.runs) > 1:
+                                try:
+                                    p = paragraph._element
+                                    p.remove(paragraph.runs[-1]._element)
+                                except (AttributeError, IndexError):
+                                    # If _element access fails, break and use fallback
+                                    break
+                        else:
+                            # No runs, fall back to simple assignment
+                            cell.text = new_text
                     else:
-                        # No runs, fall back to simple assignment
+                        # No paragraphs, fall back to simple assignment
                         cell.text = new_text
-                else:
-                    # No paragraphs, fall back to simple assignment
+                except Exception:
+                    # If anything fails, use simple assignment
                     cell.text = new_text
 
         print(f"  Populated table '{table_name}' with {num_data_rows} rows ({replacements} replacements)")
@@ -279,9 +287,13 @@ class PowerPointWriter:
             first_run = paragraph.runs[0]
             first_run.text = new_text
 
-            # Remove all other runs
-            for _ in range(len(paragraph.runs) - 1):
-                p = paragraph._element
-                p.remove(paragraph.runs[-1]._element)
+            # Remove all other runs safely
+            while len(paragraph.runs) > 1:
+                try:
+                    p = paragraph._element
+                    p.remove(paragraph.runs[-1]._element)
+                except (AttributeError, IndexError):
+                    # If _element access fails, break and keep extra runs
+                    break
 
         return replacements, replaced_fields
