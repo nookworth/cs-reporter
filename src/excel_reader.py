@@ -52,11 +52,50 @@ class ExcelReader:
         print("\nExtracting supplier fields...")
         data.update(self._extract_field_group(self.supplier_excel_fields, "supplier"))
 
-        # Extract table data
+        # Extract table data (simplified)
+        print(f"\nExtracting table data... (found {len(self.table_fields)} tables configured)")
         for table_name, table_config in self.table_fields.items():
             try:
-                table_data = self._read_table(table_name, table_config)
+                sheet = table_config["sheet"]
+                column_name = table_config["columns"][0]["col"]  # e.g., "Support Category"
+                field_name = table_config["columns"][0]["name"]  # e.g., "re_cat"
+                count_column = table_config["count_column"]  # e.g., "re_cat_count"
+                limit = table_config.get("limit", None)  # Optional limit for top N
+                uncategorized_label = table_config.get("uncategorized_label", None)  # e.g., "Uncategorized"
+
+                print(f"  Reading table '{table_name}' from column '{column_name}'")
+
+                # Get unique value counts
+                value_counts = excel_utils.count_unique_values(
+                    self.excel_path, sheet, column_name, uncategorized_label=uncategorized_label
+                )
+
+                # Sort by count descending (highest first)
+                value_counts.sort(key=lambda x: x["count"], reverse=True)
+
+                # If uncategorized_label is set, move it to the bottom
+                if uncategorized_label:
+                    uncategorized_items = [item for item in value_counts if item["value"] == uncategorized_label]
+                    categorized_items = [item for item in value_counts if item["value"] != uncategorized_label]
+                    value_counts = categorized_items + uncategorized_items
+
+                # Apply limit if specified (after moving uncategorized to bottom)
+                if limit:
+                    value_counts = value_counts[:limit]
+                    print(f"  → Limiting to top {limit} results")
+
+                # Transform to use configured field names
+                table_data = []
+                for item in value_counts:
+                    row = {
+                        field_name: item["value"],
+                        count_column: item["count"]
+                    }
+                    table_data.append(row)
+
                 data[table_name] = table_data
+                print(f"  → Found {len(table_data)} unique categories")
+
             except Exception as e:
                 raise ValueError(f"Error reading table '{table_name}': {e}")
 
@@ -190,146 +229,3 @@ class ExcelReader:
                 data[field_name] = None
 
         return data
-
-    def _read_table(self, _table_name, table_config):
-        """
-        Read a table from Excel and aggregate by category.
-
-        Args:
-            table_name: Name of the table
-            table_config: Configuration with sheet, start_row, and columns
-
-        Returns:
-            List of dictionaries, each representing an aggregated row
-        """
-        sheet_name = table_config["sheet"]
-        start_row = table_config["start_row"]
-        columns = table_config["columns"]
-
-        # Read the sheet
-        df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
-
-        # Find column indices by searching for header names
-        # Header row is assumed to be start_row - 1
-        header_row_index = start_row - 2  # Convert to 0-based index
-        header_row = df.iloc[header_row_index]
-
-        col_indices = {}
-        for col_config in columns:
-            col_name = col_config["name"]
-            col_heading = col_config["col"]  # Now this is a heading name, not a letter
-
-            # Search for the column heading in the header row
-            col_idx = None
-            for idx, header_value in enumerate(header_row):
-                if str(header_value).strip() == col_heading:
-                    col_idx = idx
-                    break
-
-            if col_idx is None:
-                raise ValueError(
-                    f"Column heading '{col_heading}' not found in sheet '{sheet_name}' "
-                    f"at row {start_row - 1}. Available headers: {list(header_row.dropna())}"
-                )
-
-            col_indices[col_name] = col_idx
-
-        # Read rows starting from start_row (convert to 0-based index)
-        row_index = start_row - 1
-        rows = []
-
-        while row_index < len(df):
-            # Read values from each column
-            row_data = {}
-            is_empty = True
-
-            for col_name, col_idx in col_indices.items():
-                try:
-                    value = df.iloc[row_index, col_idx]
-                    if not pd.isna(value):
-                        is_empty = False
-                    row_data[col_name] = value
-                except (IndexError, KeyError):
-                    row_data[col_name] = None
-
-            # Stop if we hit an empty row (all values are NaN/None)
-            if is_empty:
-                break
-
-            rows.append(row_data)
-            row_index += 1
-
-        # Aggregate if configured
-        if table_config.get("aggregate", False):
-            rows = self._aggregate_table_rows(rows, table_config)
-
-        return rows
-
-    def _aggregate_table_rows(self, rows, table_config):
-        """
-        Aggregate table rows by grouping column and either counting or summing.
-
-        Args:
-            rows: List of row dictionaries
-            table_config: Configuration with group_by and aggregation settings
-
-        Returns:
-            List of aggregated row dictionaries
-        """
-        if not rows:
-            return []
-
-        group_by = table_config.get("group_by")
-        if not group_by:
-            return rows
-
-        # Convert to DataFrame for easy aggregation
-        df = pd.DataFrame(rows)
-
-        # Drop rows where the group_by column is NaN
-        df = df.dropna(subset=[group_by])
-
-        # Check aggregation type: 'count' or 'sum'
-        agg_type = table_config.get("aggregation_type", "sum")
-        count_column = table_config.get("count_column")
-        sum_column = table_config.get("sum_column")
-
-        if agg_type == "count":
-            # Count occurrences of each category
-            if not count_column:
-                raise ValueError(
-                    f"Table config missing 'count_column' for aggregation_type='count'"
-                )
-
-            # Group and count
-            aggregated = df.groupby(group_by).size().reset_index(name=count_column)
-
-        elif agg_type == "sum":
-            # Sum a numeric column
-            if not sum_column:
-                raise ValueError(
-                    f"Table config missing 'sum_column' for aggregation_type='sum'"
-                )
-
-            # Convert sum_column to numeric, replacing errors with 0
-            df[sum_column] = pd.to_numeric(df[sum_column], errors="coerce").fillna(0)
-
-            # Group and sum
-            aggregated = df.groupby(group_by)[sum_column].sum().reset_index()
-        else:
-            raise ValueError(
-                f"Unknown aggregation_type: '{agg_type}'. Use 'count' or 'sum'."
-            )
-
-        # Convert back to list of dictionaries
-        result = aggregated.to_dict("records")
-
-        # Format values if formatting is specified
-        if table_config.get("format_values"):
-            value_col = count_column if agg_type == "count" else sum_column
-            for row in result:
-                row[value_col] = excel_utils.format_table_value(
-                    row[value_col], table_config.get("value_format", {})
-                )
-
-        return result

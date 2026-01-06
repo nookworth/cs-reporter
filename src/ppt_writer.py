@@ -115,6 +115,10 @@ class PowerPointWriter:
         """
         Populate a table with dynamic rows if it contains a {{table:name}} placeholder.
 
+        Table structure:
+        - Row 0: Header row (preserved as-is)
+        - Row 1: Template row with placeholders (used to create data rows)
+
         Args:
             table: python-pptx Table object
             table_data: Dictionary of table names to lists of row data
@@ -122,9 +126,20 @@ class PowerPointWriter:
         Returns:
             Number of replacements made, or None if not a dynamic table
         """
-        # Check if the first cell of the first row contains {{table:table_name}}
-        first_cell_text = table.rows[0].cells[0].text
-        table_match = re.search(r'\{\{table:(\w+)\}\}', first_cell_text)
+        # Check if table has at least 2 rows (header + template)
+        if len(table.rows) < 2:
+            return None
+
+        # Check if the first cell of the SECOND row contains {{table:table_name}}
+        # (First row is the header)
+        template_cell = table.rows[1].cells[0]
+        template_cell_text = ''
+
+        for paragraph in template_cell.text_frame.paragraphs:
+            for run in paragraph.runs:
+                template_cell_text += run.text
+
+        table_match = re.search(r'\{\{table:(\w+)\}\}', template_cell_text)
 
         if not table_match:
             return None
@@ -141,38 +156,39 @@ class PowerPointWriter:
             print(f"  Warning: Table '{table_name}' has no data rows")
             return 0
 
-        # The first row is the template
-        template_row_idx = 0
+        # The second row (index 1) is the template
+        template_row_idx = 1
         template_row = table.rows[template_row_idx]
 
         # Extract template cell properties and placeholders
         template_cells = []
         for cell in template_row.cells:
+            # Reconstruct full text from runs (PowerPoint splits text)
+            cell_text = ''
+            for paragraph in cell.text_frame.paragraphs:
+                cell_text += ''.join(run.text for run in paragraph.runs)
+
             cell_info = {
-                'text': cell.text,
+                'text': cell_text,
                 'text_frame': cell.text_frame
             }
             template_cells.append(cell_info)
 
-        # Delete all existing rows
-        # We'll rebuild the table from scratch
-        # Note: python-pptx doesn't support deleting rows easily,
-        # so we'll clear and repopulate existing rows
-
-        # Determine how many rows we need
+        # Determine how many total rows we need (header + data rows)
         num_data_rows = len(rows_data)
-        num_existing_rows = len(table.rows)
+        num_total_rows_needed = 1 + num_data_rows  # 1 header + N data rows
 
-        # Add more rows if needed
-        while len(table.rows) < num_data_rows:
-            table.add_row()
+        # Add more rows if needed by duplicating the template row
+        while len(table.rows) < num_total_rows_needed:
+            # Duplicate the template row using the underlying XML element
+            tbl = table._tbl
+            tr = deepcopy(tbl.tr_lst[template_row_idx])
+            tbl.append(tr)
 
-        # Remove extra rows if needed (clear them at least)
-        # python-pptx doesn't easily support row deletion, so we keep them
-
-        # Populate each row with data
+        # Populate each data row (starting from row 1, preserving row 0 as header)
         replacements = 0
-        for row_idx, row_data in enumerate(rows_data):
+        for data_idx, row_data in enumerate(rows_data):
+            row_idx = data_idx + 1  # Skip row 0 (header)
             row = table.rows[row_idx]
 
             for col_idx, cell in enumerate(row.cells):
@@ -190,10 +206,27 @@ class PowerPointWriter:
                 # Also remove the {{table:name}} marker from first cell
                 new_text = re.sub(r'\{\{table:\w+\}\}', '', new_text).strip()
 
-                # Set the cell text
-                cell.text = new_text
+                # Set the cell text while preserving formatting
+                # Instead of cell.text = new_text (which clears formatting),
+                # we modify the first run and remove others
+                if cell.text_frame.paragraphs:
+                    paragraph = cell.text_frame.paragraphs[0]
+                    if paragraph.runs:
+                        # Set text in first run (preserves its formatting)
+                        first_run = paragraph.runs[0]
+                        first_run.text = new_text
+                        # Remove all other runs
+                        for _ in range(len(paragraph.runs) - 1):
+                            p = paragraph._element
+                            p.remove(paragraph.runs[-1]._element)
+                    else:
+                        # No runs, fall back to simple assignment
+                        cell.text = new_text
+                else:
+                    # No paragraphs, fall back to simple assignment
+                    cell.text = new_text
 
-        print(f"  Populated table '{table_name}' with {num_data_rows} rows")
+        print(f"  Populated table '{table_name}' with {num_data_rows} rows ({replacements} replacements)")
 
         return replacements
 

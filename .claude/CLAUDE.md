@@ -1,7 +1,7 @@
 # CS Reporter - Project Status
 
-**Last Updated:** January 3, 2026
-**Status:** Dual-file architecture implemented, satisfaction fields working
+**Last Updated:** January 6, 2026
+**Status:** All core features implemented and working. Focus now on template refinement and user experience.
 
 ---
 
@@ -20,6 +20,34 @@ CS Reporter is a Python utility that:
 ---
 
 ## Recent Changes
+
+### January 6, 2026 - Dynamic Tables Fully Implemented
+
+**All dynamic table features now working:**
+
+1. **Header Row Support**
+   - Tables now support header rows (Row 0) with independent formatting
+   - Template row (Row 1) defines formatting for all data rows
+   - Script automatically duplicates template row for each data entry
+
+2. **Uncategorized Grouping**
+   - Added `uncategorized_label` config option for support category tables
+   - Empty/null values grouped under "Uncategorized" label
+   - Uncategorized row always appears at bottom regardless of count
+
+3. **Top N Filtering**
+   - Added `limit` config option to restrict table rows
+   - `top_orgs` table returns only top 5 organizations by count
+   - Applied after sorting by count (highest first)
+
+4. **Format Preservation**
+   - Table cells now preserve formatting from template row
+   - Font, size, color, alignment all maintained when populating data
+   - No more font size mismatches between header and data rows
+
+5. **Code Cleanup**
+   - Removed all debug logging from table population
+   - Cleaner console output for production use
 
 ### January 3, 2026 - Dual-File Architecture
 
@@ -72,23 +100,30 @@ CS Reporter is a Python utility that:
    - **Month fields**: Automatically parsed from date columns (e.g., "December")
    - **Previous month**: Automatically calculated (e.g., "November")
    - **Row count fields**: Fields ending in `_req` auto-count rows
+   - **Satisfaction fields**: Fields ending in `_sat` and `_sat_c` count ratings
+   - **Resolution time**: Fields ending in `_reso` calculate average resolution time
    - **Column reading**: Reads first non-null value from named columns
 
 3. **Dynamic Tables with Aggregation**
    - Auto-populate PowerPoint tables with variable rows
+   - Header row support with independent formatting
    - Count aggregation: Group and count occurrences
-   - Sum aggregation: Group and sum numeric values
+   - Top N filtering: Limit results to top entries
+   - Uncategorized grouping: Group empty values with custom label
+   - Format preservation: Inherits formatting from template row
    - Column header search (no hardcoded column letters)
 
 4. **Template-Based PowerPoint Generation**
    - Placeholder replacement: `{{field_name}}` → actual values
    - Dynamic table population: `{{table:table_name}}` → multiple rows
+   - Split placeholder handling: Handles PowerPoint's text run splitting
    - Formatting support: currency, percentages, numbers
 
 5. **CLI with File Dialogs**
    - Simple `reporter` command
    - Automatic file dialogs for Excel selection
    - Clear progress indicators
+   - Clean console output
 
 ### 🔧 Technical Improvements
 
@@ -206,23 +241,25 @@ table_fields:
 
 ## What's Working Now
 
-### ✅ Implemented
+### ✅ All Core Features Implemented
+
+**Scalar Fields:**
 - `{{month}}` - Extracts month name from "Ticket created - Date" column (e.g., "December")
 - `{{prev_month}}` - Calculates previous month (e.g., "November")
-- `{{re_req}}` - Counts rows in retail sheet
-- `{{su_req}}` - Counts rows in supplier sheet
-- `{{re_prev_req}}` - Counts rows in retail sheet FROM PREVIOUS MONTH FILE
-- `{{su_prev_req}}` - Counts rows in supplier sheet FROM PREVIOUS MONTH FILE
+- `{{re_req}}`, `{{su_req}}` - Counts rows in retail/supplier sheets
+- `{{re_prev_req}}`, `{{su_prev_req}}` - Counts rows FROM PREVIOUS MONTH FILE
 - `{{re_sat}}`, `{{su_sat}}` - Count "good" satisfaction ratings (case-insensitive, exact match)
 - `{{re_sat_c}}`, `{{su_sat_c}}` - Count "good with comment" ratings (case-insensitive)
 - `{{re_prev_sat}}`, `{{su_prev_sat}}` - Count "good" FROM PREVIOUS MONTH FILE
 - `{{re_prev_sat_c}}`, `{{su_prev_sat_c}}` - Count "good with comment" FROM PREVIOUS MONTH FILE
 - `{{re_reso}}`, `{{su_reso}}` - Average resolution time (filters <= 3 days)
 - `{{re_prev_reso}}`, `{{su_prev_reso}}` - Average resolution time FROM PREVIOUS MONTH FILE
-- Dynamic tables (`re_sup_cat`, `su_sup_cat`) with aggregation
 
-### 🚧 Not Yet Implemented
-- Top organizations table
+**Dynamic Tables:**
+- `re_sup_cat` - Retail support categories with counts, uncategorized grouping
+- `su_sup_cat` - Supplier support categories with counts, uncategorized grouping
+- `top_orgs` - Top 5 organizations by ticket count
+- All tables support header rows, format preservation, and sorting
 
 ### 📦 WIP / Not Currently Used
 - History management system (code exists in `src/history.py` but is commented out in `src/main.py`)
@@ -230,37 +267,34 @@ table_fields:
 
 ## Next Steps
 
-### Critical Bugs to Fix
+### Current Focus: User Experience & Template Refinement
 
-1. **Fix dynamic table population**
-   - Debug `re_sup_cat` and `su_sup_cat` table generation
-   - Ensure placeholders are being replaced correctly
-   - Verify new rows are being created
+The core functionality is complete. Remaining work focuses on:
 
-### Immediate Tasks
+1. **Template Visual Design**
+   - Fine-tune PowerPoint template for visual appeal
+   - Ensure consistent formatting across all slides
+   - Test with various data sizes
+   - Verify all placeholders are correctly positioned
 
-1. **~~Implement remaining field types~~** ✅ DONE
-   - ~~Date difference calculations~~ Implemented as `calculate_average_resolution_time()`
+2. **User Experience for Non-Technical Users**
+   - Test installation process on clean machine
+   - Write clear setup instructions
+   - Create troubleshooting guide
+   - Consider packaging as standalone executable
 
-2. **Test with real data:**
-   ```bash
-   source .venv/bin/activate
-   reporter
-   # Select current month Excel file
-   # Select previous month Excel file
-   # Verify output
-   ```
+3. **Documentation**
+   - Create user guide with screenshots
+   - Document common issues and solutions
+   - Provide template customization guide
 
-3. **Verify template:**
-   - Ensure `report_template.pptx` has all placeholders
-   - Test PowerPoint generation
-
-### Future Enhancements
+### Future Enhancements (Optional)
 
 - Add error handling for missing columns
 - Add validation for sheet names
-- Support for more aggregation types
+- Support for more aggregation types (sum, average, etc.)
 - Re-enable history management if needed (code exists in `src/history.py`)
+- Add data validation warnings (e.g., missing satisfaction ratings)
 
 ---
 
@@ -353,17 +387,22 @@ Your template needs:
 - [ ] `{{su_sat_c}}` - Supplier satisfaction with comment
 
 ### Dynamic Tables
+
+**Important:** All tables need TWO rows:
+- **Row 0 (Header):** Column headers with desired formatting (e.g., "Support Category", "Count")
+- **Row 1 (Template):** Placeholders with formatting for data rows
+
 - [ ] **Retail Support Categories Table**
-  - Row 1, Cell 1: `{{table:re_sup_cat}} {{re_cat}}`
-  - Row 1, Cell 2: `{{re_cat_count}}`
+  - Row 0: `Support Category | Count` (header - format as desired)
+  - Row 1: `{{table:re_sup_cat}} {{re_cat}} | {{re_cat_count}}` (template - format for data)
 
 - [ ] **Supplier Support Categories Table**
-  - Row 1, Cell 1: `{{table:su_sup_cat}} {{su_cat}}`
-  - Row 1, Cell 2: `{{su_cat_count}}`
+  - Row 0: `Support Category | Count` (header - format as desired)
+  - Row 1: `{{table:su_sup_cat}} {{su_cat}} | {{su_cat_count}}` (template - format for data)
 
 - [ ] **Top Organizations Table**
-  - Row 1, Cell 1: `{{table:top_orgs}} {{org_name}}`
-  - Row 1, Cell 2: `{{org_count}}`
+  - Row 0: `Organization | Count` (header - format as desired)
+  - Row 1: `{{table:top_orgs}} {{org_name}} | {{org_count}}` (template - format for data)
 
 ---
 
@@ -392,13 +431,12 @@ Your Excel files should have:
 
 ## Known Issues & Considerations
 
-### Current Bugs (Jan 3, 2026)
+### Fixed Bugs (Jan 6, 2026)
 
-1. **Dynamic tables not populating correctly**
-   - `re_sup_cat` and `su_sup_cat` tables are implemented but:
-     - Placeholder values not being filled in correctly
-     - Not generating new rows as expected
-   - Need to debug the table population logic in `ppt_writer.py`
+1. **~~Dynamic tables not populating correctly~~** ✅ FIXED (Jan 6)
+   - Tables now fully working with header row support
+   - Format preservation from template row
+   - Proper row duplication using XML API
 
 ### Fixed Bugs (Jan 3, 2026)
 
@@ -575,6 +613,23 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 - `.gitignore` - Added LibreOffice lock files (`.~lock.*#`)
 - `.claude/CLAUDE.md` - Updated for new architecture, features, and common template mistakes
 
+### Session Jan 6, 2026
+**Dynamic Table Implementation:**
+- `src/ppt_writer.py` - Implemented header row support (Row 0 = header, Row 1 = template)
+- `src/ppt_writer.py` - Fixed row duplication using python-pptx XML API
+- `src/ppt_writer.py` - Implemented format preservation for table cells
+- `src/excel_utils.py` - Added `uncategorized_label` parameter to `count_unique_values()`
+- `src/excel_reader.py` - Added support for `limit` and `uncategorized_label` config options
+- `src/excel_reader.py` - Implemented sorting and uncategorized row positioning
+- `config/mapping.yaml` - Added `limit: 5` to `top_orgs` table
+- `config/mapping.yaml` - Added `uncategorized_label: "Uncategorized"` to support category tables
+
+**Code Cleanup:**
+- `src/ppt_writer.py` - Removed all debug logging for production readiness
+
+**Documentation:**
+- `.claude/CLAUDE.md` - Updated project status to reflect completion of core features
+
 ---
 
 ## Session Progress
@@ -593,8 +648,12 @@ pip list | grep -E "pandas|python-pptx|PyYAML"
 12. ✅ Added debug output for replaced/unreplaced fields (Jan 3)
 13. ✅ Implemented resolution time calculation (filters <= 3 days) (Jan 3)
 14. ✅ Month field on title page now working (fixed by split placeholder handler) (Jan 3)
-15. ⬜ Fix dynamic table population
-16. ⬜ Test full workflow with real data
+15. ✅ Fixed dynamic table population with header row support (Jan 6)
+16. ✅ Implemented top_orgs table with top 5 limit (Jan 6)
+17. ✅ Added uncategorized grouping for support category tables (Jan 6)
+18. ✅ Implemented format preservation for table cells (Jan 6)
+19. ✅ Removed debug logging for production readiness (Jan 6)
+20. ✅ All core features complete and tested (Jan 6)
 
 ---
 

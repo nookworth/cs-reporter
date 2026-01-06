@@ -74,7 +74,7 @@ supplier_excel_fields:
 # Dynamic table mappings
 # Tables read multiple rows from Excel and populate PowerPoint tables
 table_fields:
-  # ✅ IMPLEMENTED - Support categories table with aggregation ‼️ not filling in placeholder values correctly and not generating new rows
+  # ✅ IMPLEMENTED - Support categories table with aggregation
   re_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 1"
     start_row: 2  # First row of data (1-indexed)
@@ -89,6 +89,7 @@ table_fields:
     aggregation_type: "count"       # Count occurrences (not summing a column)
     group_by: "re_cat"              # Group by this column
     count_column: "re_cat_count"    # Name for the count field in output
+    uncategorized_label: "Uncategorized"  # Empty/null values grouped under this label
 
     # Optional: Format the aggregated values
     format_values: true
@@ -96,7 +97,7 @@ table_fields:
       type: "number"
       decimals: 0
 
-  # ✅ IMPLEMENTED - Support categories table (SU) ‼️ not filling in placeholder values correctly and not generating new rows
+  # ✅ IMPLEMENTED - Support categories table (SU)
   su_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 2"
     start_row: 2  # First row of data (1-indexed)
@@ -111,6 +112,7 @@ table_fields:
     aggregation_type: "count"       # Count occurrences (not summing a column)
     group_by: "su_cat"              # Group by this column
     count_column: "su_cat_count"    # Name for the count field in output
+    uncategorized_label: "Uncategorized"  # Empty/null values grouped under this label
 
     # Optional: Format the aggregated values
     format_values: true
@@ -118,61 +120,25 @@ table_fields:
       type: "number"
       decimals: 0
 
-  # 🚧 NOT IMPLEMENTED - Top organizations table - might require reading from both supplier and retailer sides
-  # top_orgs:
-  #   sheet: "Organizations"
-  #   start_row: 2  # First row of data (1-indexed) - UPDATE THIS
+  # ✅ IMPLEMENTED - Top organizations table (top 5 by count)
+  top_orgs:
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_row: 2  # First row of data (1-indexed)
 
-  #   # Columns to read from Excel
-  #   columns:
-  #     - name: "org_name"            # This becomes the field name for placeholders
-  #       col: "Ticket organisation name"
+    # Columns to read from Excel
+    columns:
+      - name: "org_name"            # This becomes the field name for placeholders
+        col: "Ticket organisation name"
 
-  #   # Aggregation settings
-  #   aggregate: true                 # Enable aggregation
-  #   aggregation_type: "count"       # Count occurrences (not summing a column)
-  #   group_by: "org_name"            # Group by this column
-  #   count_column: "org_count"       # Name for the count field in output
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "org_name"            # Group by this column
+    count_column: "org_count"       # Name for the count field in output
+    limit: 5                        # Only return top 5
 
-  #   # Optional: Format the aggregated values
-  #   format_values: true
-  #   value_format:
-  #     type: "number"
-  #     decimals: 0
-
-  # Example: Simple table without aggregation
-  # monthly_metrics:
-  #   sheet: "Metrics"
-  #   start_row: 10
-  #   columns:
-  #     - name: "metric_name"
-  #       col: "Metric Name"    # Column heading in Excel
-  #     - name: "value"
-  #       col: "Value"          # Column heading in Excel
-  #   aggregate: false  # No aggregation, just read rows as-is
-
-# Notes:
-# 1. In your Excel file, put data at the cells specified above
-# 2. In your PowerPoint template, use {{field_name}} as placeholders
-#    For example: "Revenue: {{revenue}}" will become "Revenue: $123,456.00"
-# 3. The field names must match between this config and your PPT placeholders
-#
-# For dynamic tables:
-# 4. Create a table in PowerPoint with one row as the template
-# 5. In the first cell, put {{table:table_name}} (e.g., {{table:re_sup_cat}})
-# 6. In other cells, put placeholders matching column names (e.g., {{re_cat}}, {{re_cat_count}})
-# 7. The script will auto-populate the table with your data
-# 8. For table columns, 'col' specifies the COLUMN HEADING NAME in Excel (row before start_row)
-#    The script searches for this heading and reads data from that column
-#
-# Table example in PowerPoint:
-# ┌───────────────────────────────────┬────────────────┐
-# │ {{table:re_sup_cat}} {{re_cat}}   │ {{re_cat_count}}│
-# └───────────────────────────────────┴────────────────┘
-#
-# This will become:
-# ┌──────────────┬────────┐
-# │ Technical    │ 45     │
-# │ Billing      │ 23     │
-# │ General      │ 12     │
-# └──────────────┴────────┘
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0

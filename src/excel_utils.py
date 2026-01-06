@@ -140,6 +140,46 @@ def count_column_value(excel_path, sheet_name, column_name, value_to_count):
     return count
 
 
+def count_unique_values(excel_path, sheet_name, column_name, uncategorized_label=None):
+    """
+    Count all unique values in a column.
+
+    Args:
+        excel_path: Path to the Excel file
+        sheet_name: Name of the Excel sheet
+        column_name: Column header name
+        uncategorized_label: If provided, null/empty values will be grouped under this label
+
+    Returns:
+        List of dicts with value and count, e.g.:
+        [{"value": "Technical", "count": 10}, {"value": "Billing", "count": 5}, ...]
+    """
+    # Read the sheet with first row as header
+    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+
+    # Find the column by name
+    if column_name not in df.columns:
+        raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
+
+    # Handle uncategorized values
+    if uncategorized_label:
+        # Replace NaN and empty strings with the uncategorized label
+        df[column_name] = df[column_name].fillna(uncategorized_label)
+        df[column_name] = df[column_name].replace('', uncategorized_label)
+        # Count all values including the uncategorized ones
+        value_counts = df[column_name].value_counts()
+    else:
+        # Drop NaN values as before
+        value_counts = df[column_name].dropna().value_counts()
+
+    # Convert to list of dicts
+    result = []
+    for value, count in value_counts.items():
+        result.append({"value": str(value), "count": int(count)})
+
+    return result
+
+
 def format_table_value(value, format_config):
     """
     Format a table value according to its configuration.
