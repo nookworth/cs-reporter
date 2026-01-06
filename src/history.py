@@ -41,7 +41,7 @@ class HistoryManager:
         filename = f"{month_str}.json"
         filepath = self.history_dir / filename
 
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(scalar_data, f, indent=2, default=str)
 
         return filepath
@@ -78,7 +78,7 @@ class HistoryManager:
         if not filepath.exists():
             return None
 
-        with open(filepath, 'r') as f:
+        with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def get_month_from_data(self, data):

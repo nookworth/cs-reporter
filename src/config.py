@@ -35,8 +35,8 @@ def load_config(config_path=None):
             f"Please create a mapping.yaml file in the config directory."
         )
 
-    # Load YAML
-    with open(config_path, 'r') as f:
+    # Load YAML (with UTF-8 encoding for Windows compatibility)
+    with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
  
     if 'template_path' not in config:
