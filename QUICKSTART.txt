@@ -1,0 +1,38 @@
+================================================================================
+  CS REPORTER - QUICK START
+================================================================================
+
+WINDOWS USERS:
+--------------
+First Time Setup:
+1. Open Command Prompt
+2. cd C:\path\to\cs-reporter
+3. setup.bat
+
+Generate Reports:
+run-reporter.bat
+
+
+macOS/LINUX USERS:
+------------------
+First Time Setup:
+1. Open Terminal
+2. cd /path/to/cs-reporter
+3. chmod +x setup.sh
+4. ./setup.sh
+
+Generate Reports:
+./run-reporter.sh
+
+
+ALL USERS:
+----------
+Select your Excel files when prompted.
+Reports will be in the "output" folder.
+
+
+Need Help?
+----------
+See README.md or USER_GUIDE.md
+
+================================================================================
