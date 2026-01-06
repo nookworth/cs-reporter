@@ -130,3 +130,6 @@ data/
 
 # Claude
 .claude/*.local*
+
+# Distribution
+**/*.zip
