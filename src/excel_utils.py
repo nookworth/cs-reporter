@@ -163,9 +163,16 @@ def count_unique_values(excel_path, sheet_name, column_name, uncategorized_label
 
     # Handle uncategorized values
     if uncategorized_label:
-        # Replace NaN and empty strings with the uncategorized label
+        # Replace NaN with the uncategorized label
         df[column_name] = df[column_name].fillna(uncategorized_label)
-        df[column_name] = df[column_name].replace('', uncategorized_label)
+
+        # Replace empty strings and whitespace-only strings with the uncategorized label
+        df[column_name] = df[column_name].apply(
+            lambda x: uncategorized_label
+            if isinstance(x, str) and (x == '' or re.fullmatch(r'[\s]+', x))
+            else x
+        )
+
         # Count all values including the uncategorized ones
         value_counts = df[column_name].value_counts()
     else:
@@ -208,47 +215,94 @@ def format_table_value(value, format_config):
 
 
 def calculate_average_resolution_time(
-    excel_path, sheet_name, columns=["Ticket created - Date", "Ticket solved - Date"]
+    excel_path,
+    sheet_name,
+    columns=["Ticket created - Date", "Ticket solved - Date"],
+    assignee_column="Assignee name"
 ):
     """
-    Calculates the resolution time for an individual row
-    Formula: "Ticket solved - Date" (column N) - "Ticket created - Date" (column B) + 1
+    Calculates the average resolution time with assignee-based filtering.
+
+    Formula: "Ticket solved - Date" - "Ticket created - Date"
+    Calculated in hours for precision, then converted to days for output.
+
+    Filtering logic:
+    - Drops rows with no "Ticket solved - Date"
+    - Excludes tickets where resolution > 72 hours AND assignee is "Leo Brown"
+    - Includes all other tickets regardless of resolution time
+
+    Args:
+        excel_path: Path to the Excel file
+        sheet_name: Name of the Excel sheet
+        columns: List of [start_date_column, end_date_column]
+        assignee_column: Column name containing assignee information
+
+    Returns:
+        Average resolution time in days (rounded to 2 decimals), or 0 if no valid data
     """
 
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
-    total_days_included = 0
-    total_resolution_time = 0
 
-    start_dates = df[columns[0]].dropna()
-    end_dates = df[columns[1]].dropna()
-
-    if len(start_dates) != len(end_dates):
+    # Validate that assignee column exists
+    if assignee_column not in df.columns:
         raise ValueError(
-            f"Error: different number of start and end dates\nFile path: {excel_path}\nSheet Name: {sheet_name}\nColumns: {columns}"
+            f"Assignee column '{assignee_column}' not found in sheet '{sheet_name}'"
         )
 
-    for d in range(len(start_dates)):
-        if re.fullmatch(r"[\s]+", start_dates[d]) or re.fullmatch(
-            r"[\s]+", end_dates[d]
-        ):
+    # Create a working dataframe with the necessary columns
+    work_df = df[[columns[0], columns[1], assignee_column]].copy()
+
+    # Drop rows with no "Ticket solved - Date" (requirement #1)
+    work_df = work_df.dropna(subset=[columns[1]])
+
+    # Initialize counters
+    total_tickets_included = 0
+    total_resolution_time_hours = 0
+
+    # Iterate through rows
+    for idx, row in work_df.iterrows():
+        start_date_str = row[columns[0]]
+        end_date_str = row[columns[1]]
+        assignee = row[assignee_column]
+
+        # Skip if start date is NaN or whitespace
+        if pd.isna(start_date_str):
+            continue
+        if isinstance(start_date_str, str) and re.fullmatch(r'[\s]+', start_date_str):
             continue
 
-        diff = datetime.date.fromisoformat(end_dates[d]) - datetime.date.fromisoformat(
-            start_dates[d]
-        )
+        # Skip if end date is whitespace (NaN already filtered by dropna)
+        if isinstance(end_date_str, str) and re.fullmatch(r'[\s]+', end_date_str):
+            continue
 
-        # add 1 day to diff following Leo's typical method
-        normalized_diff = diff + datetime.timedelta(days=1)
+        # Calculate resolution time in hours
+        try:
+            diff = datetime.date.fromisoformat(end_date_str) - datetime.date.fromisoformat(
+                start_date_str
+            )
+            # Convert to hours (timedelta.days * 24 hours)
+            resolution_time_hours = diff.days * 24
+        except (ValueError, TypeError):
+            continue  # Skip invalid dates
 
-        if normalized_diff.days <= 3:
-            total_days_included += 1
-            total_resolution_time += normalized_diff.days
+        # NEW FILTERING LOGIC (requirement #3)
+        # Exclude tickets where: resolution > 72 hours AND assignee is Leo Brown
+        if resolution_time_hours > 72 and assignee == "Leo Brown":
+            continue  # Skip this ticket
+
+        # Include all other tickets (requirement #4)
+        total_tickets_included += 1
+        total_resolution_time_hours += resolution_time_hours
 
     # Avoid division by zero if no valid data
-    if total_days_included == 0:
+    if total_tickets_included == 0:
         return 0
 
-    return round(total_resolution_time / total_days_included, 2)
+    # Calculate average in hours, then convert to days
+    average_hours = total_resolution_time_hours / total_tickets_included
+    average_days = average_hours / 24
+
+    return round(average_days, 2)
 
 
 # for testing from command line
