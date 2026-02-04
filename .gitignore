@@ -131,5 +131,13 @@ data/
 # Claude
 .claude/*.local*
 
+# Future plans (internal notes)
+future_plans/*
+!future_plans/.gitkeep
+
 # Distribution
 **/*.zip
+
+# Templates (may contain sensitive info)
+templates/*
+!templates/.gitkeep
