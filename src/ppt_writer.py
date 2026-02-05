@@ -48,7 +48,14 @@ class PowerPointWriter:
 
         # Generate output filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_filename = f"report_{timestamp}.pptx"
+
+        # Include "demo" in filename if using demo config
+        config_path = self.config.get('config_path', '')
+        if 'demo' in config_path.lower():
+            output_filename = f"demo_report_{timestamp}.pptx"
+        else:
+            output_filename = f"report_{timestamp}.pptx"
+
         output_path = self.output_dir / output_filename
 
         # Save the presentation
@@ -282,18 +289,13 @@ class PowerPointWriter:
                     replacements += 1
                     replaced_fields.add(field_name)
 
-            # Clear all runs and set the new text in a single run
+            # Put all text in the first run and clear the rest
             # This preserves the first run's formatting
             first_run = paragraph.runs[0]
             first_run.text = new_text
 
-            # Remove all other runs safely
-            while len(paragraph.runs) > 1:
-                try:
-                    p = paragraph._element
-                    p.remove(paragraph.runs[-1]._element)
-                except (AttributeError, IndexError):
-                    # If _element access fails, break and keep extra runs
-                    break
+            # Clear text from all other runs (more reliable than removing them)
+            for run in paragraph.runs[1:]:
+                run.text = ''
 
         return replacements, replaced_fields

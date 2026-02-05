@@ -4,6 +4,7 @@ Main entry point for the CS Reporter utility.
 Opens a file dialog to select an Excel file, then generates a PowerPoint report.
 """
 
+import argparse
 import sys
 import tkinter as tk
 from tkinter import filedialog
@@ -11,6 +12,19 @@ from tkinter import filedialog
 from .excel_reader import ExcelReader
 from .ppt_writer import PowerPointWriter
 from .config import load_config
+
+
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="CS Reporter - Excel to PowerPoint Report Generator"
+    )
+    parser.add_argument(
+        "--config", "-c",
+        help="Path to config file (default: config/mapping.yaml)",
+        default=None
+    )
+    return parser.parse_args()
 
 
 def select_excel_file(title="Select Excel Input File"):
@@ -35,12 +49,14 @@ def select_excel_file(title="Select Excel Input File"):
 
 def main():
     """Main execution function."""
+    args = parse_args()
+
     print("CS Reporter - Excel to PowerPoint Report Generator")
     print("=" * 60)
 
     # Load configuration
     try:
-        config = load_config()
+        config = load_config(config_path=args.config)
         print(f"✓ Configuration loaded from: {config['config_path']}")
     except Exception as e:
         print(f"✗ Error loading configuration: {e}")
