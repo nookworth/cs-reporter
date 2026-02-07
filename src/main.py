@@ -9,9 +9,9 @@ import sys
 import tkinter as tk
 from tkinter import filedialog
 
+from .config import load_config
 from .excel_reader import ExcelReader
 from .ppt_writer import PowerPointWriter
-from .config import load_config
 
 
 def parse_args():
@@ -20,9 +20,10 @@ def parse_args():
         description="CS Reporter - Excel to PowerPoint Report Generator"
     )
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         help="Path to config file (default: config/mapping.yaml)",
-        default=None
+        default=None,
     )
     return parser.parse_args()
 
@@ -36,11 +37,7 @@ def select_excel_file(title="Select Excel Input File"):
     root.withdraw()  # Hide the main window
 
     file_path = filedialog.askopenfilename(
-        title=title,
-        filetypes=[
-            ("Excel files", "*.xlsx *.xls"),
-            ("All files", "*.*")
-        ]
+        title=title, filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")]
     )
 
     root.destroy()
@@ -84,7 +81,9 @@ def main():
 
     # Read data from both Excel files
     try:
-        reader = ExcelReader(current_excel_path, config, previous_excel_path=previous_excel_path)
+        reader = ExcelReader(
+            current_excel_path, config, previous_excel_path=previous_excel_path
+        )
         data = reader.extract_data()
         print(f"✓ Extracted {len(data)} fields from Excel files")
     except Exception as e:
