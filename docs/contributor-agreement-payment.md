@@ -10,7 +10,7 @@ CS Reporter - an automated Excel-to-PowerPoint report generator
 
 ## What Ben Will Do
 
-Complete Version 1: generalize cs-reporter from hardcoded suffix-based operations to explicit config-driven operations, as defined in `.claude/plans/generalize-to-config-driven-operations.md`.
+Complete Version 1: generalize cs-reporter from hardcoded suffix-based operations to explicit config-driven operations, as defined in `plans/generalize-to-config-driven-operations.md`.
 
 This includes:
 

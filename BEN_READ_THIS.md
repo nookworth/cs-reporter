@@ -184,7 +184,9 @@ Before jumping in, read through these files to understand how the pieces fit tog
 
 ### The plan
 
-The full implementation plan is in `.claude/plans/generalize-to-config-driven-operations.md`. It has the new config format, the files to modify, and step-by-step implementation details. That's your blueprint.
+The full implementation plan is in `plans/generalize-to-config-driven-operations.md`. It has the new config format, the files to modify, and step-by-step implementation details. That's your blueprint.
+
+**Long-term direction:** After Version 1, we're exploring LLM-powered config generation — users upload Excel + PowerPoint pairs and an LLM infers the mappings. This is why the plan emphasizes a regular, explicit config format and includes a schema file. Keep this in mind when making design decisions: the config should be easy for an LLM to generate correctly.
 
 ---
 
