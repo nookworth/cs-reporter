@@ -1,7 +1,7 @@
 # CS Reporter - Project Status
 
-**Last Updated:** January 6, 2026
-**Status:** All core features implemented and working. Focus now on template refinement and user experience.
+**Last Updated:** February 7, 2026
+**Status:** Core features complete. Onboarding collaborator for Version 1 (config-driven operations). Exploring LLM-powered config generation as differentiator.
 
 ---
 
@@ -20,6 +20,41 @@ CS Reporter is a Python utility that:
 ---
 
 ## Recent Changes
+
+### February 7, 2026 - Collaborator Onboarding & Product Direction
+
+**Major decisions:**
+
+1. **Product Viability Assessment**
+   - Researched competitors: Displayr ($3k+/user/year), Rollstack (enterprise), SlideFab (€25/month)
+   - SlideFab does essentially what cs-reporter does (Excel→PowerPoint via templates)
+   - Decision: Push toward LLM-powered config generation as the differentiator
+   - Basic web UI alone wouldn't be differentiated enough to compete
+
+2. **Onboarding Collaborator (Ben)**
+   - Created `BEN_READ_THIS.md` with demo setup, contribution workflow, and roadmap
+   - Added contributor agreements in `docs/` (flat $50 payment or 15% profit share)
+   - Plans moved to `plans/` (project root) to be agent-agnostic
+
+3. **Code Quality Infrastructure**
+   - Added Ruff for formatting and linting
+   - Added pre-commit hooks (auto-runs on every commit)
+   - Setup scripts now install dev dependencies and hooks automatically
+
+4. **Version 1 Plan Updates** (`plans/generalize-to-config-driven-operations.md`)
+   - Added `sum` operation (covers ~90% of reporting use cases)
+   - Changed filter syntax to atomic format (easier for LLM to generate)
+   - Added `config/schema.yaml` as deliverable (documents format for LLM inference)
+   - Removed line number references (plan now works for any coding agent or human)
+
+**Long-term direction:**
+- Version 1: Config-driven operations (current work with Ben)
+- Version 2: Web UI with dropdowns populated from Excel/PowerPoint
+- Version 3: LLM-powered config inference ("upload 2-3 reports, we figure out the mappings")
+
+The LLM inference approach is the real differentiator vs. competitors like SlideFab.
+
+---
 
 ### January 6, 2026 - Dynamic Tables Fully Implemented
 
@@ -146,23 +181,21 @@ cs-reporter/
 │   ├── __init__.py
 │   ├── main.py              # CLI entry point with file dialogs
 │   ├── excel_reader.py      # Excel field extraction orchestration
-│   ├── excel_utils.py       # Excel utility functions (NEW)
+│   ├── excel_utils.py       # Excel utility functions
 │   ├── ppt_writer.py        # PowerPoint generation
 │   ├── config.py            # Configuration loader
-│   └── history.py           # History management
+│   └── history.py           # History management (WIP)
+├── plans/                   # Implementation plans (agent-agnostic)
+│   └── generalize-to-config-driven-operations.md
 ├── templates/
 │   └── report_template.pptx # PowerPoint template
 ├── config/
 │   ├── mapping.yaml         # Current configuration
-│   └── mapping.yaml.example # Reference example (outdated)
-├── output/
-│   ├── .gitkeep
-│   └── history/             # Auto-saved monthly data
-│       └── .gitkeep
+│   └── demo_mapping.yaml    # Demo configuration
+├── output/                  # Generated reports (gitignored)
 ├── requirements.txt
 ├── setup.py
-├── README.md
-└── PROJECT_STATUS.md        # This file
+└── README.md
 ```
 
 ---
@@ -267,34 +300,31 @@ table_fields:
 
 ## Next Steps
 
-### Current Focus: User Experience & Template Refinement
+> **Implementation plans** are in `plans/` (at project root, not `.claude/`). These are designed for any developer or coding agent, not just Claude Code.
 
-The core functionality is complete. Remaining work focuses on:
+### Current Focus: Version 1 (Config-Driven Operations)
 
-1. **Template Visual Design**
-   - Fine-tune PowerPoint template for visual appeal
-   - Ensure consistent formatting across all slides
-   - Test with various data sizes
-   - Verify all placeholders are correctly positioned
+Collaborator (Ben) is working on generalizing the reporter. See `plans/generalize-to-config-driven-operations.md` for the full plan.
 
-2. **User Experience for Non-Technical Users**
-   - Test installation process on clean machine
-   - Write clear setup instructions
-   - Create troubleshooting guide
-   - Consider packaging as standalone executable
+**Key deliverables:**
+1. `OPERATIONS` registry in `src/config.py` with validation
+2. `config/schema.yaml` documenting the config format
+3. Refactored `src/excel_reader.py` using operation dispatch (no suffix detection)
+4. Configurable filters in `src/excel_utils.py` (atomic syntax)
+5. Converted `config/mapping.yaml` to explicit operation format
 
-3. **Documentation**
-   - Create user guide with screenshots
-   - Document common issues and solutions
-   - Provide template customization guide
+### After Version 1
 
-### Future Enhancements (Optional)
+1. **Prototype LLM inference** — Test if Claude can infer mappings from 2-3 Excel/PowerPoint pairs
+2. **If promising:** Build web UI with LLM-assisted config generation
+3. **If not:** Evaluate whether basic web UI is worth building given SlideFab competition
 
-- Add error handling for missing columns
-- Add validation for sheet names
-- Support for more aggregation types (sum, average, etc.)
-- Re-enable history management if needed (code exists in `src/history.py`)
-- Add data validation warnings (e.g., missing satisfaction ratings)
+### Backlog (Lower Priority)
+
+- Template visual refinement
+- Standalone executable packaging
+- History management re-enablement
+- Additional operations as needed
 
 ---
 

@@ -1,7 +1,15 @@
 # Plan: Generalize cs-reporter (Version 1)
 
+> **Note:** This plan is designed for any developer or coding assistant. Code locations are referenced by function/class name rather than line numbers.
+
 ## Goal
 Transform cs-reporter from suffix-based operation detection to explicit config-driven operations, making it usable with any Excel/PowerPoint combination.
+
+## Future Direction
+This refactor is a prerequisite for LLM-powered config generation. The config format should be:
+- **Regular**: Consistent structure across all operations (easier for LLM to generate)
+- **Explicit**: No implicit behavior based on naming conventions
+- **Schema-documented**: A formal schema that an LLM can reference when generating configs
 
 ---
 
@@ -40,10 +48,21 @@ fields:
     operation: avg_date_diff
     start_column: "Created Date"
     end_column: "Resolved Date"
-    filters:  # Optional, replaces hardcoded Leo Brown/72hr filter
+    filters:  # Optional, atomic filter syntax for LLM compatibility
       - column: "Assignee"
-        equals: "Leo Brown"
-        max_hours: 72
+        operator: equals
+        value: "Leo Brown"
+      - column: "_result"  # Special: references the computed value
+        operator: greater_than
+        value: 72
+        action: exclude
+
+  # Sum a numeric column
+  total_revenue:
+    source: current
+    sheet: "Sales"
+    operation: sum
+    column: "Amount"
 
   # Month parsing
   report_month:
@@ -72,17 +91,23 @@ table_fields:
 - Add `validate_fields()` function
 - Validate operation exists and has required params
 
-### 2. `src/excel_reader.py` (main refactor)
+### 2. `config/schema.yaml` (new file)
+- Document all valid operations and their parameters
+- Define valid enum values (e.g., `source: current | previous`, `operator: equals | greater_than | less_than`)
+- This becomes the reference for LLM config generation
+
+### 3. `src/excel_reader.py` (main refactor)
 - Replace `_extract_field_group()` with `_dispatch_operation()`
 - Remove suffix detection (`_req`, `_sat`, `_reso`, `_prev_`)
 - Use `field_config['operation']` and `field_config['source']` instead
 - Keep table extraction mostly unchanged
 
-### 3. `src/excel_utils.py` (parameterize)
+### 4. `src/excel_utils.py` (parameterize)
 - `count_column_value()`: already has `value_to_count` param (no change needed)
 - `calculate_average_resolution_time()`: add `filters` param, remove hardcoded `72` and `"Leo Brown"`
+- Add `sum_column()` function for the new `sum` operation
 
-### 4. `config/mapping.yaml` (convert format)
+### 5. `config/mapping.yaml` (convert format)
 - Convert all fields to explicit operation format
 - Replace `_prev_` naming with `source: previous`
 
@@ -92,12 +117,13 @@ table_fields:
 
 ### Step 1: Add Operation Validation (`src/config.py`)
 
-Add after line 65:
+Add at module level (after imports, before `load_config()`):
 
 ```python
 OPERATIONS = {
-    'count_rows': {'required': [], 'optional': ['sheet']},
-    'count_value': {'required': ['column', 'value'], 'optional': ['case_sensitive']},
+    'count_rows': {'required': [], 'optional': ['sheet', 'filters']},
+    'count_value': {'required': ['column', 'value'], 'optional': ['case_sensitive', 'filters']},
+    'sum': {'required': ['column'], 'optional': ['filters']},
     'avg_date_diff': {'required': ['start_column', 'end_column'], 'optional': ['filters']},
     'parse_month': {'required': ['column'], 'optional': []},
     'parse_previous_month': {'required': ['column'], 'optional': []},
@@ -122,45 +148,161 @@ Call `validate_fields(config)` in `load_config()` before returning.
 
 ---
 
+### Step 1b: Create Config Schema (`config/schema.yaml`)
+
+This schema documents the config format for future LLM-powered generation:
+
+```yaml
+# Config Schema for cs-reporter
+# Used by LLM to generate valid configurations
+
+config:
+  template_path: string  # Path to PowerPoint template
+  output_dir: string     # Output directory for generated reports
+
+  sources:
+    current:
+      required: boolean  # Always true
+    previous:
+      required: boolean  # Whether previous month file is needed
+
+  fields:
+    <field_name>:        # Arbitrary name, becomes {{field_name}} placeholder
+      source: enum [current, previous]
+      sheet: string      # Excel sheet name
+      operation: enum [count_rows, count_value, sum, avg_date_diff, parse_month, parse_previous_month, read_value]
+      # Additional params depend on operation (see below)
+
+operations:
+  count_rows:
+    description: "Count total rows in a sheet"
+    required_params: []
+    optional_params: [filters]
+
+  count_value:
+    description: "Count rows where column matches a value"
+    required_params:
+      - column: string   # Column name to check
+      - value: string    # Value to match
+    optional_params:
+      - case_sensitive: boolean  # Default: false
+      - filters: list[filter]
+
+  sum:
+    description: "Sum values in a numeric column"
+    required_params:
+      - column: string   # Column name to sum
+    optional_params:
+      - filters: list[filter]
+
+  avg_date_diff:
+    description: "Average difference between two date columns"
+    required_params:
+      - start_column: string  # Start date column
+      - end_column: string    # End date column
+    optional_params:
+      - filters: list[filter]
+
+  parse_month:
+    description: "Extract month name from first date in column"
+    required_params:
+      - column: string
+    optional_params: []
+
+  parse_previous_month:
+    description: "Extract previous month name from first date in column"
+    required_params:
+      - column: string
+    optional_params: []
+
+  read_value:
+    description: "Read first non-null value from column"
+    required_params:
+      - column: string
+    optional_params: []
+
+filter:
+  description: "Atomic filter condition"
+  params:
+    - column: string     # Column name, or "_result" for computed value
+    - operator: enum [equals, not_equals, greater_than, less_than]
+    - value: any         # Value to compare against
+    - action: enum [exclude, include_only]  # Default: exclude
+```
+
+---
+
 ### Step 2: Make Filters Configurable (`src/excel_utils.py`)
 
-Update `calculate_average_resolution_time()` (lines 217-305):
+Update `calculate_average_resolution_time()`:
 
-**Current** (hardcoded at line 290):
+**Current** (hardcoded filter logic inside the function):
 ```python
 if resolution_time_hours > 72 and assignee == "Leo Brown":
     continue
 ```
 
-**New** (configurable):
+**New** (configurable with atomic filter syntax):
 ```python
+def apply_filters(row, filters, computed_value=None):
+    """
+    Apply atomic filters to a row. Returns True if row should be excluded.
+
+    Filter format:
+      - column: "Assignee" or "_result" (for computed value)
+        operator: equals | not_equals | greater_than | less_than
+        value: <comparison value>
+        action: exclude (default) | include_only
+    """
+    for f in filters:
+        col = f.get('column')
+        operator = f.get('operator')
+        target = f.get('value')
+        action = f.get('action', 'exclude')
+
+        # Get the value to compare
+        if col == '_result':
+            actual = computed_value
+        else:
+            actual = row.get(col, '')
+
+        # Evaluate the condition
+        match = False
+        if operator == 'equals':
+            match = actual == target
+        elif operator == 'not_equals':
+            match = actual != target
+        elif operator == 'greater_than':
+            match = actual > target
+        elif operator == 'less_than':
+            match = actual < target
+
+        # Apply action
+        if action == 'exclude' and match:
+            return True  # Exclude this row
+        elif action == 'include_only' and not match:
+            return True  # Exclude rows that don't match
+
+    return False  # Keep this row
+
 def calculate_average_resolution_time(
     excel_path,
     sheet_name,
-    columns=["Ticket created - Date", "Ticket solved - Date"],
-    assignee_column="Assignee name",
+    columns=None,
     filters=None  # NEW PARAM
 ):
     # ... existing code ...
 
     # Replace hardcoded filter with config-driven filtering
-    if filters:
-        skip = False
-        for f in filters:
-            col_val = row.get(f.get('column', assignee_column), '')
-            if f.get('equals') and col_val == f['equals']:
-                if f.get('max_hours') and resolution_time_hours > f['max_hours']:
-                    skip = True
-                    break
-        if skip:
-            continue
+    if filters and apply_filters(row, filters, computed_value=resolution_time_hours):
+        continue
 ```
 
 ---
 
 ### Step 3: Refactor ExcelReader (`src/excel_reader.py`)
 
-**Replace constructor** (lines 15-32):
+**Replace the `__init__` constructor:**
 ```python
 def __init__(self, excel_path, config, previous_excel_path=None):
     self.excel_path = Path(excel_path)
@@ -170,7 +312,7 @@ def __init__(self, excel_path, config, previous_excel_path=None):
     self.table_fields = config.get("table_fields", {})
 ```
 
-**Replace `_extract_field_group()` (lines 109-231) with:**
+**Replace the entire `_extract_field_group()` method with this new method:**
 ```python
 def _dispatch_operation(self, field_name, field_config):
     """Execute the configured operation for a field."""
@@ -197,6 +339,13 @@ def _dispatch_operation(self, field_name, field_config):
             field_config['value']
         )
 
+    elif operation == 'sum':
+        return excel_utils.sum_column(
+            excel_path, sheet,
+            field_config['column'],
+            filters=field_config.get('filters')
+        )
+
     elif operation == 'avg_date_diff':
         return excel_utils.calculate_average_resolution_time(
             excel_path, sheet,
@@ -219,7 +368,7 @@ def _dispatch_operation(self, field_name, field_config):
         raise ValueError(f"Unknown operation: {operation}")
 ```
 
-**Update `extract_data()` (lines 34-107):**
+**Simplify `extract_data()` to use the new dispatch method:**
 ```python
 def extract_data(self):
     data = {}
@@ -235,8 +384,8 @@ def extract_data(self):
             print(f"  Warning: {field_name} failed: {e}")
             data[field_name] = None
 
-    # Extract tables (existing code unchanged)
-    # ... lines 56-100 stay the same ...
+    # Extract tables (keep existing table extraction logic unchanged)
+    # ... existing table_fields extraction code stays the same ...
 
     return data
 ```
@@ -290,8 +439,12 @@ fields:
     end_column: "Ticket solved - Date"
     filters:
       - column: "Assignee name"
-        equals: "Leo Brown"
-        max_hours: 72
+        operator: equals
+        value: "Leo Brown"
+      - column: "_result"
+        operator: greater_than
+        value: 72
+        action: exclude
 
   month:
     source: current
@@ -321,11 +474,23 @@ fields:
 
 | File | Lines Changed | What Changes |
 |------|---------------|--------------|
-| `src/config.py` | +30 lines | Add OPERATIONS registry and validate_fields() |
+| `src/config.py` | +35 lines | Add OPERATIONS registry and validate_fields() |
+| `config/schema.yaml` | +70 lines (new) | Document config format for LLM generation |
 | `src/excel_reader.py` | ~120 lines rewritten | Replace suffix detection with operation dispatch |
-| `src/excel_utils.py` | ~15 lines | Add filters param to calculate_average_resolution_time() |
+| `src/excel_utils.py` | ~50 lines | Add apply_filters(), sum_column(), update avg function |
 | `config/mapping.yaml` | Full rewrite | Convert to explicit operation format |
 
 **No changes needed:**
 - `src/ppt_writer.py` - Already generic
 - `src/main.py` - Just calls ExcelReader
+
+---
+
+## Why These Changes Support LLM Inference
+
+When we eventually build the LLM-powered config generator:
+
+1. **Schema file** → The LLM prompt includes this as the "target format"
+2. **Atomic filters** → Simpler pattern for LLM to generate (each filter is independent)
+3. **Explicit operations** → No implicit behavior to infer; LLM just matches patterns to operations
+4. **Validation** → Clear error messages help LLM self-correct if it generates invalid config
