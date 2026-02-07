@@ -4,6 +4,19 @@
 
 This guide walks you through running CS Reporter using demo data. The production template and Excel files are proprietary and not included in the repo.
 
+**Start here:** The first half of this doc gets you set up and running the reporter so you can see what it does. Once you're comfortable with that, the second half covers how to start contributing code.
+
+---
+
+## Compensation
+
+Before you start contributing code, choose one of two compensation models. Both are documented in `docs/`:
+
+- **Flat payment** (`docs/contributor-agreement-payment.md`): $50 paid on completion of Version 1
+- **Profit share** (`docs/contributor-agreement-profit-share.md`): 15% of net profits if/when the project generates revenue
+
+Pick whichever you prefer -- read both agreements, sign one, and send it to Chris.
+
 ---
 
 ## Prerequisites
@@ -147,6 +160,31 @@ The demo setup mirrors the production workflow exactly -- same code paths, same 
 - **Data:** Generated dummy data vs. real Excel exports
 
 If you need to test a code change, the demo path exercises all the same logic.
+
+---
+
+## Contributing code
+
+Everything above this point is about running and QA-testing the reporter. Once you can generate a demo report and you understand the flow (Excel files in, PowerPoint out, config controls the mapping), you're ready to start writing code.
+
+### Getting oriented
+
+Before jumping in, read through these files to understand how the pieces fit together:
+
+- `src/excel_reader.py` -- this is where most of the Version 1 work happens. Read through `_extract_field_group()` to see the suffix-based logic that needs to be replaced.
+- `src/excel_utils.py` -- the utility functions that `excel_reader.py` calls. These are mostly fine already; they just need to be parameterized.
+- `config/demo_mapping.yaml` -- the config format you'll be changing. Compare it with the "What general-purpose looks like" section in the roadmap below.
+
+### Workflow
+
+1. Create a feature branch off `main`
+2. Make your changes
+3. Test with the demo data (`reporter --config config/demo_mapping.yaml`)
+4. Open a PR for review
+
+### The plan
+
+The full implementation plan is in `.claude/plans/generalize-to-config-driven-operations.md`. It has the new config format, the files to modify, and step-by-step implementation details. That's your blueprint.
 
 ---
 
