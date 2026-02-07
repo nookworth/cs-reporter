@@ -3,7 +3,6 @@ Excel file reader using pandas.
 Extracts data from specified cells according to the configuration.
 """
 
-import pandas as pd
 from pathlib import Path
 
 from . import excel_utils
@@ -53,21 +52,30 @@ class ExcelReader:
         data.update(self._extract_field_group(self.supplier_excel_fields, "supplier"))
 
         # Extract table data (simplified)
-        print(f"\nExtracting table data... (found {len(self.table_fields)} tables configured)")
+        print(
+            f"\nExtracting table data... (found {len(self.table_fields)} tables configured)"
+        )
         for table_name, table_config in self.table_fields.items():
             try:
                 sheet = table_config["sheet"]
-                column_name = table_config["columns"][0]["col"]  # e.g., "Support Category"
+                column_name = table_config["columns"][0][
+                    "col"
+                ]  # e.g., "Support Category"
                 field_name = table_config["columns"][0]["name"]  # e.g., "re_cat"
                 count_column = table_config["count_column"]  # e.g., "re_cat_count"
                 limit = table_config.get("limit", None)  # Optional limit for top N
-                uncategorized_label = table_config.get("uncategorized_label", None)  # e.g., "Uncategorized"
+                uncategorized_label = table_config.get(
+                    "uncategorized_label", None
+                )  # e.g., "Uncategorized"
 
                 print(f"  Reading table '{table_name}' from column '{column_name}'")
 
                 # Get unique value counts
                 value_counts = excel_utils.count_unique_values(
-                    self.excel_path, sheet, column_name, uncategorized_label=uncategorized_label
+                    self.excel_path,
+                    sheet,
+                    column_name,
+                    uncategorized_label=uncategorized_label,
                 )
 
                 # Sort by count descending (highest first)
@@ -75,8 +83,16 @@ class ExcelReader:
 
                 # If uncategorized_label is set, move it to the bottom
                 if uncategorized_label:
-                    uncategorized_items = [item for item in value_counts if item["value"] == uncategorized_label]
-                    categorized_items = [item for item in value_counts if item["value"] != uncategorized_label]
+                    uncategorized_items = [
+                        item
+                        for item in value_counts
+                        if item["value"] == uncategorized_label
+                    ]
+                    categorized_items = [
+                        item
+                        for item in value_counts
+                        if item["value"] != uncategorized_label
+                    ]
                     value_counts = categorized_items + uncategorized_items
 
                 # Apply limit if specified (after moving uncategorized to bottom)
@@ -87,21 +103,18 @@ class ExcelReader:
                 # Transform to use configured field names
                 table_data = []
                 for item in value_counts:
-                    row = {
-                        field_name: item["value"],
-                        count_column: item["count"]
-                    }
+                    row = {field_name: item["value"], count_column: item["count"]}
                     table_data.append(row)
 
                 data[table_name] = table_data
                 print(f"  → Found {len(table_data)} unique categories")
 
             except Exception as e:
-                raise ValueError(f"Error reading table '{table_name}': {e}")
+                raise ValueError(f"Error reading table '{table_name}': {e}") from e
 
         # Debug: Show all extracted field names
         print(
-            f"\nExtracted fields: {', '.join([k for k in data.keys() if not isinstance(data[k], list)])}"
+            f"\nExtracted fields: {', '.join([k for k in data if not isinstance(data[k], list)])}"
         )
 
         return data

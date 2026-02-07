@@ -3,8 +3,8 @@ History management for storing and retrieving previous month data.
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 class HistoryManager:
@@ -41,7 +41,7 @@ class HistoryManager:
         filename = f"{month_str}.json"
         filepath = self.history_dir / filename
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(scalar_data, f, indent=2, default=str)
 
         return filepath
@@ -78,7 +78,7 @@ class HistoryManager:
         if not filepath.exists():
             return None
 
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             return json.load(f)
 
     def get_month_from_data(self, data):
@@ -91,7 +91,7 @@ class HistoryManager:
         Returns:
             Month string in YYYY-MM format, or None if can't parse
         """
-        month_field = data.get('month')
+        month_field = data.get("month")
         if not month_field:
             return None
 
@@ -99,5 +99,5 @@ class HistoryManager:
             # Parse "November 2025" format
             date = datetime.strptime(month_field, "%B %Y")
             return date.strftime("%Y-%m")
-        except:
+        except (ValueError, TypeError):
             return None

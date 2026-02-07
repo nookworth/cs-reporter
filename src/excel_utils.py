@@ -4,6 +4,7 @@ Utility functions for Excel data processing.
 
 import datetime
 import re
+
 import pandas as pd
 
 
@@ -70,7 +71,7 @@ def parse_month_from_date(date_value):
         date = pd.to_datetime(date_value)
         # Return month name
         return date.strftime("%B")
-    except:
+    except (ValueError, TypeError):
         return "Unknown"
 
 
@@ -92,7 +93,7 @@ def parse_previous_month_from_date(date_value):
         date = pd.to_datetime(date_value)
 
         # Calculate previous month
-        if date.month == 1:
+        if date.month == 1:  # noqa: SIM108
             # January -> December
             prev_month_num = 12
         else:
@@ -104,7 +105,7 @@ def parse_previous_month_from_date(date_value):
 
         # Return month name
         return prev_date.strftime("%B")
-    except:
+    except (ValueError, TypeError):
         return "Unknown"
 
 
@@ -168,9 +169,11 @@ def count_unique_values(excel_path, sheet_name, column_name, uncategorized_label
 
         # Replace empty strings and whitespace-only strings with the uncategorized label
         df[column_name] = df[column_name].apply(
-            lambda x: uncategorized_label
-            if isinstance(x, str) and (x == '' or re.fullmatch(r'[\s]+', x))
-            else x
+            lambda x: (
+                uncategorized_label
+                if isinstance(x, str) and (x == "" or re.fullmatch(r"[\s]+", x))
+                else x
+            )
         )
 
         # Count all values including the uncategorized ones
@@ -217,8 +220,8 @@ def format_table_value(value, format_config):
 def calculate_average_resolution_time(
     excel_path,
     sheet_name,
-    columns=["Ticket created - Date", "Ticket solved - Date"],
-    assignee_column="Assignee name"
+    columns=None,
+    assignee_column="Assignee name",
 ):
     """
     Calculates the average resolution time with assignee-based filtering.
@@ -241,6 +244,9 @@ def calculate_average_resolution_time(
         Average resolution time in days (rounded to 2 decimals), or 0 if no valid data
     """
 
+    if columns is None:
+        columns = ["Ticket created - Date", "Ticket solved - Date"]
+
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
 
     # Validate that assignee column exists
@@ -260,7 +266,7 @@ def calculate_average_resolution_time(
     total_resolution_time_hours = 0
 
     # Iterate through rows
-    for idx, row in work_df.iterrows():
+    for _idx, row in work_df.iterrows():
         start_date_str = row[columns[0]]
         end_date_str = row[columns[1]]
         assignee = row[assignee_column]
@@ -268,18 +274,18 @@ def calculate_average_resolution_time(
         # Skip if start date is NaN or whitespace
         if pd.isna(start_date_str):
             continue
-        if isinstance(start_date_str, str) and re.fullmatch(r'[\s]+', start_date_str):
+        if isinstance(start_date_str, str) and re.fullmatch(r"[\s]+", start_date_str):
             continue
 
         # Skip if end date is whitespace (NaN already filtered by dropna)
-        if isinstance(end_date_str, str) and re.fullmatch(r'[\s]+', end_date_str):
+        if isinstance(end_date_str, str) and re.fullmatch(r"[\s]+", end_date_str):
             continue
 
         # Calculate resolution time in hours
         try:
-            diff = datetime.date.fromisoformat(end_date_str) - datetime.date.fromisoformat(
-                start_date_str
-            )
+            diff = datetime.date.fromisoformat(
+                end_date_str
+            ) - datetime.date.fromisoformat(start_date_str)
             # Convert to hours (timedelta.days * 24 hours)
             resolution_time_hours = diff.days * 24
         except (ValueError, TypeError):

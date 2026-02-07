@@ -85,7 +85,7 @@ ASSIGNEE_NAMES = [
 
 def random_date_in_month(year: int, month: int) -> date:
     """Generate a random date within a given month."""
-    if month == 12:
+    if month == 12:  # noqa: SIM108
         next_month = date(year + 1, 1, 1)
     else:
         next_month = date(year, month + 1, 1)
@@ -97,10 +97,7 @@ def random_date_in_month(year: int, month: int) -> date:
 
 
 def generate_ticket_data(
-    num_tickets: int,
-    year: int,
-    month: int,
-    include_org_names: bool = False
+    num_tickets: int, year: int, month: int, include_org_names: bool = False
 ) -> list[dict]:
     """Generate ticket data for a single sheet."""
     tickets = []
@@ -123,7 +120,7 @@ def generate_ticket_data(
             solved_date = created_date + timedelta(days=resolution_days)
 
         ticket = {
-            "Ticket ID": f"TKT-{year}{month:02d}-{i+1:04d}",
+            "Ticket ID": f"TKT-{year}{month:02d}-{i + 1:04d}",
             "Ticket created - Date": created_date.isoformat(),
             "Ticket solved - Date": solved_date.isoformat() if solved_date else None,
             "Ticket satisfaction rating": random.choice(SATISFACTION_RATINGS),
@@ -139,11 +136,17 @@ def generate_ticket_data(
     return tickets
 
 
-def create_excel_file(filepath: Path, year: int, month: int, retail_count: int, supplier_count: int):
+def create_excel_file(
+    filepath: Path, year: int, month: int, retail_count: int, supplier_count: int
+):
     """Create an Excel file with retail and supplier sheets."""
     # Generate data
-    retail_data = generate_ticket_data(retail_count, year, month, include_org_names=False)
-    supplier_data = generate_ticket_data(supplier_count, year, month, include_org_names=True)
+    retail_data = generate_ticket_data(
+        retail_count, year, month, include_org_names=False
+    )
+    supplier_data = generate_ticket_data(
+        supplier_count, year, month, include_org_names=True
+    )
 
     # Create DataFrames
     retail_df = pd.DataFrame(retail_data)
@@ -170,22 +173,14 @@ def main():
 
     # Create current month file (January 2026)
     create_excel_file(
-        CURRENT_MONTH_FILE,
-        year=2026,
-        month=1,
-        retail_count=92,
-        supplier_count=48
+        CURRENT_MONTH_FILE, year=2026, month=1, retail_count=92, supplier_count=48
     )
 
     print()
 
     # Create previous month file (December 2025)
     create_excel_file(
-        PREVIOUS_MONTH_FILE,
-        year=2025,
-        month=12,
-        retail_count=78,
-        supplier_count=41
+        PREVIOUS_MONTH_FILE, year=2025, month=12, retail_count=78, supplier_count=41
     )
 
     print("\nDone! Demo files created in:", OUTPUT_DIR)

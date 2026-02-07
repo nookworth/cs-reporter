@@ -43,16 +43,16 @@ python -m pip install --upgrade pip --quiet
 echo   pip upgraded
 echo.
 
-REM Install dependencies
-echo Installing dependencies...
-pip install -r requirements.txt --quiet
-echo   Dependencies installed
+REM Install cs-reporter and all dependencies
+echo Installing cs-reporter...
+pip install -e . -r requirements-dev.txt --quiet
+echo   cs-reporter installed
 echo.
 
-REM Install package in editable mode
-echo Installing cs-reporter...
-pip install -e . --quiet
-echo   cs-reporter installed
+REM Set up pre-commit hooks
+echo Setting up pre-commit hooks...
+pre-commit install --quiet
+echo   Pre-commit hooks installed
 echo.
 
 REM Create launcher script

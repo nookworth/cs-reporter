@@ -3,12 +3,12 @@ PowerPoint generator using python-pptx.
 Replaces placeholders in a template with data from Excel.
 """
 
-from pathlib import Path
-from datetime import datetime
-from pptx import Presentation
-from pptx.util import Pt
-from copy import deepcopy
 import re
+from copy import deepcopy
+from datetime import datetime
+from pathlib import Path
+
+from pptx import Presentation
 
 
 class PowerPointWriter:
@@ -22,8 +22,8 @@ class PowerPointWriter:
             config: Configuration dictionary with template path
         """
         self.config = config
-        self.template_path = Path(config['template_path'])
-        self.output_dir = Path(config.get('output_dir', 'output'))
+        self.template_path = Path(config["template_path"])
+        self.output_dir = Path(config.get("output_dir", "output"))
 
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -50,8 +50,8 @@ class PowerPointWriter:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Include "demo" in filename if using demo config
-        config_path = self.config.get('config_path', '')
-        if 'demo' in config_path.lower():
+        config_path = self.config.get("config_path", "")
+        if "demo" in config_path.lower():
             output_filename = f"demo_report_{timestamp}.pptx"
         else:
             output_filename = f"report_{timestamp}.pptx"
@@ -82,7 +82,7 @@ class PowerPointWriter:
         scalar_data = {k: v for k, v in data.items() if not isinstance(v, list)}
 
         # Iterate through all slides
-        for slide_idx, slide in enumerate(presentation.slides):
+        for _slide_idx, slide in enumerate(presentation.slides):
             # Iterate through all shapes in the slide
             for shape in slide.shapes:
                 if hasattr(shape, "text_frame"):
@@ -140,13 +140,13 @@ class PowerPointWriter:
         # Check if the first cell of the SECOND row contains {{table:table_name}}
         # (First row is the header)
         template_cell = table.rows[1].cells[0]
-        template_cell_text = ''
+        template_cell_text = ""
 
         for paragraph in template_cell.text_frame.paragraphs:
             for run in paragraph.runs:
                 template_cell_text += run.text
 
-        table_match = re.search(r'\{\{table:(\w+)\}\}', template_cell_text)
+        table_match = re.search(r"\{\{table:(\w+)\}\}", template_cell_text)
 
         if not table_match:
             return None
@@ -171,14 +171,11 @@ class PowerPointWriter:
         template_cells = []
         for cell in template_row.cells:
             # Reconstruct full text from runs (PowerPoint splits text)
-            cell_text = ''
+            cell_text = ""
             for paragraph in cell.text_frame.paragraphs:
-                cell_text += ''.join(run.text for run in paragraph.runs)
+                cell_text += "".join(run.text for run in paragraph.runs)
 
-            cell_info = {
-                'text': cell_text,
-                'text_frame': cell.text_frame
-            }
+            cell_info = {"text": cell_text, "text_frame": cell.text_frame}
             template_cells.append(cell_info)
 
         # Determine how many total rows we need (header + data rows)
@@ -200,7 +197,7 @@ class PowerPointWriter:
 
             for col_idx, cell in enumerate(row.cells):
                 # Get template text for this column
-                template_text = template_cells[col_idx]['text']
+                template_text = template_cells[col_idx]["text"]
 
                 # Replace placeholders in the template text
                 new_text = template_text
@@ -211,7 +208,7 @@ class PowerPointWriter:
                         replacements += 1
 
                 # Also remove the {{table:name}} marker from first cell
-                new_text = re.sub(r'\{\{table:\w+\}\}', '', new_text).strip()
+                new_text = re.sub(r"\{\{table:\w+\}\}", "", new_text).strip()
 
                 # Set the cell text while preserving formatting
                 # Instead of cell.text = new_text (which clears formatting),
@@ -241,7 +238,9 @@ class PowerPointWriter:
                     # If anything fails, use simple assignment
                     cell.text = new_text
 
-        print(f"  Populated table '{table_name}' with {num_data_rows} rows ({replacements} replacements)")
+        print(
+            f"  Populated table '{table_name}' with {num_data_rows} rows ({replacements} replacements)"
+        )
 
         return replacements
 
@@ -267,11 +266,11 @@ class PowerPointWriter:
                 continue
 
             # Get the full paragraph text
-            full_text = ''.join(run.text for run in paragraph.runs)
+            full_text = "".join(run.text for run in paragraph.runs)
 
             # Check if there are any placeholders in this paragraph
             has_placeholder = False
-            for field_name in data.keys():
+            for field_name in data:
                 placeholder = f"{{{{{field_name}}}}}"
                 if placeholder in full_text:
                     has_placeholder = True
@@ -296,6 +295,6 @@ class PowerPointWriter:
 
             # Clear text from all other runs (more reliable than removing them)
             for run in paragraph.runs[1:]:
-                run.text = ''
+                run.text = ""
 
         return replacements, replaced_fields

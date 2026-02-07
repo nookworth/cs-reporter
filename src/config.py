@@ -3,8 +3,9 @@ Configuration loader for the CS Reporter.
 Loads and validates YAML configuration files.
 """
 
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 def load_config(config_path=None):
@@ -36,15 +37,15 @@ def load_config(config_path=None):
         )
 
     # Load YAML (with UTF-8 encoding for Windows compatibility)
-    with open(config_path, 'r', encoding='utf-8') as f:
+    with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
- 
-    if 'template_path' not in config:
+
+    if "template_path" not in config:
         raise ValueError("Config must contain 'template_path'")
 
     # Resolve template path relative to project root
     project_root = Path(__file__).parent.parent
-    template_path = Path(config['template_path'])
+    template_path = Path(config["template_path"])
 
     if not template_path.is_absolute():
         template_path = project_root / template_path
@@ -55,11 +56,11 @@ def load_config(config_path=None):
             f"Please ensure the PowerPoint template exists at this location."
         )
 
-    config['template_path'] = str(template_path)
-    config['config_path'] = str(config_path)
+    config["template_path"] = str(template_path)
+    config["config_path"] = str(config_path)
 
     # Set default output directory if not specified
-    if 'output_dir' not in config:
-        config['output_dir'] = str(project_root / "output")
+    if "output_dir" not in config:
+        config["output_dir"] = str(project_root / "output")
 
     return config
