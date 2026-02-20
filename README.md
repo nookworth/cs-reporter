@@ -12,17 +12,39 @@ Transforms Excel ticket exports into formatted PowerPoint presentations with mon
 
 ## 🚀 Quick Start
 
-### Choose Your Version
+### 🌐 Web Interface (Easiest)
 
-**V1 (Original - Recommended for existing users):**
+![Web UI Screenshot](BT-Docs/pics/WebUI.png)
+
+**Launch the web UI:**
+```bash
+# Windows
+run_web_v3.bat
+
+# macOS/Linux
+./run_web_v3.sh
+```
+
+Then:
+1. Drag & drop your Excel files
+2. Click "Generate Report"
+3. Download your PowerPoint
+
+**Perfect for:** Non-technical users, quick reports, team sharing
+
+### 💻 Command Line
+
+**V1 (Original):**
 ```bash
 python -m src.main
 ```
 
-**V2 (Refactored - New features):**
+**V2 (Refactored):**
 ```bash
 python run_v2.py
 ```
+
+**Perfect for:** Automation, scripting, scheduled tasks
 
 ### First Time Setup
 
@@ -86,6 +108,28 @@ cs-reporter/
 │   └── ...              # Other modules
 └── BT-Docs/             # Technical documentation
 ```
+
+---
+
+## 🌟 Version 3 (V3) - Web UI (NEW!)
+
+**V3 brings CS Reporter to the browser with a sleek Streamlit interface:**
+
+### Key Enhancements
+
+- **Drag-and-Drop Interface:** No more command line prompts. Simply upload your Excel files directly in the browser.
+- **Instant Preview:** View the first 5 rows and available tabs of your uploaded Excel files to ensure you clicked the right ones!
+- **Data Extracted Preview:** See exactly what metrics and tables were successfully pulled before the PowerPoint is generated.
+- **One-Click Download:** Get your generated PowerPoint right in the browser.
+- **Dual Support:** Easily toggle between V1 and V2 configuration files within the UI.
+
+### How to Use V3
+
+**Run Web Interface:**
+```bash
+streamlit run app_v3.py
+```
+*(Or use `run_web_v3.bat` on Windows)*
 
 ---
 
@@ -195,6 +239,7 @@ Both versions work independently. To migrate:
 3. **Run side-by-side:**
    - Keep using V1: `python -m src.main`
    - Test V2: `python run_v2.py`
+   - Use UI V3: `streamlit run app_v3.py`
 
 4. **Switch when ready:**
    - V2 is production-ready
@@ -356,16 +401,24 @@ python run_v2.py
 - **Features:** Configurable filters, 12 operators, 7 operations
 - **Validation:** Config validation on load
 
+### V3 (Web UI)
+- **Language:** Python 3
+- **Key Libraries:** streamlit, pandas, python-pptx, PyYAML
+- **Architecture:** Streamlit interactive web server wrapping V1/V2 functionality
+- **Features:** Drag-and-drop file upload, data previews, directly downloadable output
+
 ---
 
 ## 👥 Contributors
 
 - **V1 (Original):** [Your Friend's Name] - Initial implementation
 - **V2 (Refactored):** [Your Name] - Operation-based architecture, filters, validation
+- **V3 (Web UI):** [Your Name] - Streamlit web UI integration
 
 ---
 
 **Ready to generate your first report?**
 - **V1 Users:** Run `python -m src.main`
 - **V2 Users:** Run `python run_v2.py`
-- **New Users:** Try V2 demo with `python test_v2_config.py`
+- **V3 Users:** Run `streamlit run app_v3.py`
+- **New Users:** Try V3 Web UI with `streamlit run app_v3.py`
