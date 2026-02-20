@@ -1,173 +1,155 @@
+# CS Reporter Configuration Schema
+# Utility functions for Excel data processing.
+# This module contains the low-level Excel operations that actually read data.
+# These are the "worker functions" that excel_reader.py delegates to.
+# **Date:** 2026-02-20
+# **Status:** ✅ Completed
+# **Component:** src
+
 """
-Utility functions for Excel data processing.
+KEY FUNCTIONS:
+1. count_rows() - Count total tickets/rows in a sheet
+2. read_column_value() - Read the first value from a column
+3. parse_month_from_date() - Extract month name from a date
+4. count_column_value() - Count occurrences of a specific value
+5. count_unique_values() - Get all unique values and their counts
+6. calculate_average_resolution_time() - Complex calculation with filtering
+
+All functions use pandas for Excel file reading and data manipulation.
 """
 
 import datetime
 import re
 
-import pandas as pd
+import pandas as pd  # Pandas handles Excel file reading
 
 
-def count_rows(excel_path, sheet_name):
-    """
-    Count the total number of data rows in a sheet (excluding header).
+def apply_filters(df, filters):
 
-    Args:
-        excel_path: Path to the Excel file
-        sheet_name: Name of the Excel sheet
+    if not filters:
+        return df
+    
+    for f in filters:
+        col = f["column"]
+        op = f["operator"]
+        val = f.get("value")
+        
+        if op == "equals":
+            df = df[df[col].astype(str).str.lower() == str(val).lower()]
+        elif op == "not_equals":
+            df = df[df[col].astype(str).str.lower() != str(val).lower()]
+        elif op == "greater_than":
+            df = df[df[col] > val]
+        elif op == "greater_than_or_equal":
+            df = df[df[col] >= val]
+        elif op == "less_than":
+            df = df[df[col] < val]
+        elif op == "less_than_or_equal":
+            df = df[df[col] <= val]
+        elif op == "contains":
+            df = df[df[col].astype(str).str.contains(str(val), case=False, na=False)]
+        elif op == "not_contains":
+            df = df[~df[col].astype(str).str.contains(str(val), case=False, na=False)]
+        elif op == "starts_with":
+            df = df[df[col].astype(str).str.startswith(str(val), na=False)]
+        elif op == "ends_with":
+            df = df[df[col].astype(str).str.endswith(str(val), na=False)]
+        elif op == "is_null":
+            df = df[df[col].isna()]
+        elif op == "is_not_null":
+            df = df[df[col].notna()]
+    
+    return df
 
-    Returns:
-        Number of rows (excluding header and empty rows)
-    """
-    # Read the sheet with first row as header
+
+def count_rows(excel_path, sheet_name, filters=None):
+
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
-
-    # Count non-empty rows (drop rows where all values are NaN)
-    return len(df.dropna(how="all"))
+    df = df.dropna(how="all")
+    df = apply_filters(df, filters)
+    return len(df)
 
 
 def read_column_value(excel_path, sheet_name, column_name):
-    """
-    Read the first non-null value from a column (identified by header name).
 
-    Args:
-        excel_path: Path to the Excel file
-        sheet_name: Name of the Excel sheet
-        column_name: Column header name
-
-    Returns:
-        The first non-null value in the column
-    """
-    # Read the sheet with first row as header
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
 
-    # Find the column by name
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
 
-    # Get first non-null value
     column_data = df[column_name].dropna()
     if len(column_data) > 0:
-        return column_data.iloc[0]
+        return column_data.iloc[0]  # iloc[0] gets the first row
 
     return None
 
 
 def parse_month_from_date(date_value):
-    """
-    Parse a date value and return the month name.
 
-    Args:
-        date_value: Date value (string, datetime, or pandas Timestamp)
-
-    Returns:
-        Month name (e.g., "March")
-    """
+    # Handle NaN/null values
     if pd.isna(date_value):
         return "Unknown"
 
     try:
-        # Parse the date using pandas
         date = pd.to_datetime(date_value)
-        # Return month name
-        return date.strftime("%B")
+        return date.strftime("%B")  # %B = full month name
     except (ValueError, TypeError):
         return "Unknown"
 
 
 def parse_previous_month_from_date(date_value):
-    """
-    Parse a date value, subtract one month, and return the month name.
 
-    Args:
-        date_value: Date value (string, datetime, or pandas Timestamp)
-
-    Returns:
-        Previous month name (e.g., "February")
-    """
     if pd.isna(date_value):
         return "Unknown"
 
     try:
-        # Parse the date using pandas
+
         date = pd.to_datetime(date_value)
 
-        # Calculate previous month
         if date.month == 1:  # noqa: SIM108
-            # January -> December
             prev_month_num = 12
         else:
             prev_month_num = date.month - 1
 
-        # Create a date with the previous month number
-        # Use day=1 to avoid issues with different month lengths
         prev_date = date.replace(month=prev_month_num, day=1)
 
-        # Return month name
         return prev_date.strftime("%B")
     except (ValueError, TypeError):
         return "Unknown"
 
 
-def count_column_value(excel_path, sheet_name, column_name, value_to_count):
-    """
-    Count occurrences of a specific value in a column.
+def count_column_value(excel_path, sheet_name, column_name, value_to_count, filters=None):
 
-    Args:
-        excel_path: Path to the Excel file
-        sheet_name: Name of the Excel sheet
-        column_name: Column header name
-        value_to_count: The value to count (case-insensitive string comparison)
-
-    Returns:
-        Number of occurrences of the value
-    """
-    # Read the sheet with first row as header
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
-
-    # Find the column by name
+    
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
-
-    # Get the column data and drop NaN values
+    
+    df = apply_filters(df, filters)
     column_data = df[column_name].dropna()
-
-    # Count occurrences (case-insensitive)
+    
     count = 0
     for val in column_data:
         if isinstance(val, str) and val.lower() == value_to_count.lower():
             count += 1
-
+    
     return count
 
 
 def count_unique_values(excel_path, sheet_name, column_name, uncategorized_label=None):
-    """
-    Count all unique values in a column.
 
-    Args:
-        excel_path: Path to the Excel file
-        sheet_name: Name of the Excel sheet
-        column_name: Column header name
-        uncategorized_label: If provided, null/empty values will be grouped under this label
-
-    Returns:
-        List of dicts with value and count, e.g.:
-        [{"value": "Technical", "count": 10}, {"value": "Billing", "count": 5}, ...]
-    """
     # Read the sheet with first row as header
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
 
-    # Find the column by name
+    # Validate column exists
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
 
-    # Handle uncategorized values
+    # Handle uncategorized values (null/empty cells)
     if uncategorized_label:
-        # Replace NaN with the uncategorized label
+        # Replace NaN (missing values) with the uncategorized label
         df[column_name] = df[column_name].fillna(uncategorized_label)
 
-        # Replace empty strings and whitespace-only strings with the uncategorized label
         df[column_name] = df[column_name].apply(
             lambda x: (
                 uncategorized_label
@@ -179,10 +161,9 @@ def count_unique_values(excel_path, sheet_name, column_name, uncategorized_label
         # Count all values including the uncategorized ones
         value_counts = df[column_name].value_counts()
     else:
-        # Drop NaN values as before
+        # Drop NaN values if no uncategorized label specified
         value_counts = df[column_name].dropna().value_counts()
 
-    # Convert to list of dicts
     result = []
     for value, count in value_counts.items():
         result.append({"value": str(value), "count": int(count)})
@@ -190,23 +171,27 @@ def count_unique_values(excel_path, sheet_name, column_name, uncategorized_label
     return result
 
 
+def sum_column(excel_path, sheet_name, column_name, filters=None):
+
+    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    
+    if column_name not in df.columns:
+        raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
+    
+    df = apply_filters(df, filters)
+    return df[column_name].sum()
+
+
 def format_table_value(value, format_config):
-    """
-    Format a table value according to its configuration.
-
-    Args:
-        value: Raw value
-        format_config: Formatting configuration
-
-    Returns:
-        Formatted value
-    """
+    # Handle null/empty values
     if pd.isna(value):
         return ""
 
+    # Get formatting parameters
     format_type = format_config.get("type", "number")
     decimals = format_config.get("decimals", 0)
 
+    # Apply formatting based on type
     if format_type == "currency":
         return f"${float(value):,.{decimals}f}"
     elif format_type == "percentage":
@@ -214,105 +199,49 @@ def format_table_value(value, format_config):
     elif format_type == "number":
         return f"{float(value):,.{decimals}f}"
     else:
+        # Unknown type - just convert to string
         return str(value)
 
 
 def calculate_average_resolution_time(
     excel_path,
     sheet_name,
-    columns=None,
-    assignee_column="Assignee name",
+    start_column="Ticket created - Date",
+    end_column="Ticket solved - Date",
+    filters=None,
 ):
-    """
-    Calculates the average resolution time with assignee-based filtering.
-
-    Formula: "Ticket solved - Date" - "Ticket created - Date"
-    Calculated in hours for precision, then converted to days for output.
-
-    Filtering logic:
-    - Drops rows with no "Ticket solved - Date"
-    - Excludes tickets where resolution > 72 hours AND assignee is "Leo Brown"
-    - Includes all other tickets regardless of resolution time
-
-    Args:
-        excel_path: Path to the Excel file
-        sheet_name: Name of the Excel sheet
-        columns: List of [start_date_column, end_date_column]
-        assignee_column: Column name containing assignee information
-
-    Returns:
-        Average resolution time in days (rounded to 2 decimals), or 0 if no valid data
-    """
-
-    if columns is None:
-        columns = ["Ticket created - Date", "Ticket solved - Date"]
 
     df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
-
-    # Validate that assignee column exists
-    if assignee_column not in df.columns:
-        raise ValueError(
-            f"Assignee column '{assignee_column}' not found in sheet '{sheet_name}'"
-        )
-
-    # Create a working dataframe with the necessary columns
-    work_df = df[[columns[0], columns[1], assignee_column]].copy()
-
-    # Drop rows with no "Ticket solved - Date" (requirement #1)
-    work_df = work_df.dropna(subset=[columns[1]])
-
-    # Initialize counters
-    total_tickets_included = 0
-    total_resolution_time_hours = 0
-
-    # Iterate through rows
-    for _idx, row in work_df.iterrows():
-        start_date_str = row[columns[0]]
-        end_date_str = row[columns[1]]
-        assignee = row[assignee_column]
-
-        # Skip if start date is NaN or whitespace
-        if pd.isna(start_date_str):
+    df = df.dropna(subset=[end_column])
+    df = apply_filters(df, filters)
+    
+    total_days = 0
+    count = 0
+    
+    for _, row in df.iterrows():
+        start = row[start_column]
+        end = row[end_column]
+        
+        if pd.isna(start):
             continue
-        if isinstance(start_date_str, str) and re.fullmatch(r"[\s]+", start_date_str):
+        if isinstance(start, str) and re.fullmatch(r"[\s]+", start):
             continue
-
-        # Skip if end date is whitespace (NaN already filtered by dropna)
-        if isinstance(end_date_str, str) and re.fullmatch(r"[\s]+", end_date_str):
+        if isinstance(end, str) and re.fullmatch(r"[\s]+", end):
             continue
-
-        # Calculate resolution time in hours
+        
         try:
-            diff = datetime.date.fromisoformat(
-                end_date_str
-            ) - datetime.date.fromisoformat(start_date_str)
-            # Convert to hours (timedelta.days * 24 hours)
-            resolution_time_hours = diff.days * 24
+            diff = datetime.date.fromisoformat(end) - datetime.date.fromisoformat(start)
+            total_days += diff.days
+            count += 1
         except (ValueError, TypeError):
-            continue  # Skip invalid dates
-
-        # NEW FILTERING LOGIC (requirement #3)
-        # Exclude tickets where: resolution > 72 hours AND assignee is Leo Brown
-        if resolution_time_hours > 72 and assignee == "Leo Brown":
-            continue  # Skip this ticket
-
-        # Include all other tickets (requirement #4)
-        total_tickets_included += 1
-        total_resolution_time_hours += resolution_time_hours
-
-    # Avoid division by zero if no valid data
-    if total_tickets_included == 0:
-        return 0
-
-    # Calculate average in hours, then convert to days
-    average_hours = total_resolution_time_hours / total_tickets_included
-    average_days = average_hours / 24
-
-    return round(average_days, 2)
+            continue
+    
+    return round(total_days / count, 2) if count > 0 else 0
 
 
-# for testing from command line
+# For testing from command line
 if __name__ == "__main__":
+    # Example test case (update path as needed)
     calculate_average_resolution_time(
         excel_path="~/Downloads/ADUS Monthly review (21).xlsx",
         sheet_name="Tickets ADUS Tickets crea... 1",
