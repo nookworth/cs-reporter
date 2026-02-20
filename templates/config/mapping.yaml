@@ -1,0 +1,144 @@
+# CS Reporter Configuration
+# This file maps Excel cells to PowerPoint placeholders
+
+# Path to the PowerPoint template (relative to project root)
+template_path: templates/report_template.pptx
+
+# Output directory for generated reports (relative to project root)
+output_dir: output
+
+standard_excel_fields:
+  sheet: "Tickets ADUS Tickets crea... 1"
+
+  month: # ✅ IMPLEMENTED - parses month name from date column. ⁉️ month field not working on title page
+    cell: "Ticket created - Date" # parse month from "Ticket Created - Date" column
+
+  prev_month: # ✅ IMPLEMENTED - calculates previous month automatically
+    cell: "Ticket created - Date" # automatically calculates previous month
+
+retail_excel_fields:
+  sheet: "Tickets ADUS Tickets crea... 1"
+
+  re_req: # ✅ IMPLEMENTED - auto-counts rows
+    cell: # simple count of rows in the sheet
+
+  re_prev_req: # ✅ IMPLEMENTED - auto-counts rows from previous month Excel file
+    cell: # count rows
+
+  re_reso: # ✅ IMPLEMENTED - calculates average resolution time (filters out > 3 days)
+    cell: # Uses "Ticket created - Date" and "Ticket solved - Date" columns
+          # Formula: (solved - created) + 1, filtered to <= 3 days
+
+  re_prev_reso: # ✅ IMPLEMENTED - calculates average resolution time from previous month Excel file
+    cell: # Same calculation as re_reso
+
+  re_sat: # ✅ IMPLEMENTED - counts "good" (case-insensitive, exact match)
+    cell: "Ticket satisfaction rating" # count "good"
+
+  re_prev_sat: # ✅ IMPLEMENTED - counts "good" from previous month Excel file
+    cell: "Ticket satisfaction rating" # count "good"
+
+  re_sat_c: # ✅ IMPLEMENTED - counts "good with comment" (case-insensitive)
+    cell: "Ticket satisfaction rating" # "good with comment"
+
+  re_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" from previous month Excel file
+    cell: "Ticket satisfaction rating" # "good with comment"
+
+supplier_excel_fields:
+  sheet: "Tickets ADUS Tickets crea... 2"
+
+  su_req: # ✅ IMPLEMENTED - auto-counts rows
+    cell: # simple count of rows
+
+  su_prev_req: # ✅ IMPLEMENTED - auto-counts rows from previous month Excel file
+    cell: # count rows
+
+  su_reso: # ✅ IMPLEMENTED - calculates average resolution time (filters out > 3 days)
+    cell: # Uses "Ticket created - Date" and "Ticket solved - Date" columns
+
+  su_prev_reso: # ✅ IMPLEMENTED - calculates average resolution time from previous month Excel file
+    cell: # Same calculation as su_reso
+
+  su_sat: # ✅ IMPLEMENTED - counts "good" (case-insensitive, exact match)
+    cell: "Ticket satisfaction rating" # count "good" instances
+
+  su_sat_c: # ✅ IMPLEMENTED - counts "good with comment" (case-insensitive)
+    cell: "Ticket satisfaction rating" # count "good with comment" instances
+
+  su_prev_sat: # ✅ IMPLEMENTED - counts "good" from previous month Excel file
+    cell: "Ticket satisfaction rating" # count "good" instances
+
+  su_prev_sat_c: # ✅ IMPLEMENTED - counts "good with comment" from previous month Excel file
+    cell: "Ticket satisfaction rating" # count "good with comment" instances
+
+# Dynamic table mappings
+# Tables read multiple rows from Excel and populate PowerPoint tables
+table_fields:
+  # ✅ IMPLEMENTED - Support categories table with aggregation
+  re_sup_cat:
+    sheet: "Tickets ADUS Tickets crea... 1"
+    start_row: 2  # First row of data (1-indexed)
+
+    # Columns to read from Excel
+    columns:
+      - name: "re_cat"              # This becomes the field name for placeholders
+        col: "Support Category"
+
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "re_cat"              # Group by this column
+    count_column: "re_cat_count"    # Name for the count field in output
+    uncategorized_label: "Uncategorized"  # Empty/null values grouped under this label
+
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # ✅ IMPLEMENTED - Support categories table (SU)
+  su_sup_cat:
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_row: 2  # First row of data (1-indexed)
+
+    # Columns to read from Excel
+    columns:
+      - name: "su_cat"              # This becomes the field name for placeholders
+        col: "Support Category"
+
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "su_cat"              # Group by this column
+    count_column: "su_cat_count"    # Name for the count field in output
+    uncategorized_label: "Uncategorized"  # Empty/null values grouped under this label
+
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # ✅ IMPLEMENTED - Top organizations table (top 5 by count)
+  top_orgs:
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_row: 2  # First row of data (1-indexed)
+
+    # Columns to read from Excel
+    columns:
+      - name: "org_name"            # This becomes the field name for placeholders
+        col: "Ticket organisation name"
+
+    # Aggregation settings
+    aggregate: true                 # Enable aggregation
+    aggregation_type: "count"       # Count occurrences (not summing a column)
+    group_by: "org_name"            # Group by this column
+    count_column: "org_count"       # Name for the count field in output
+    limit: 5                        # Only return top 5
+
+    # Optional: Format the aggregated values
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0

@@ -1,0 +1,130 @@
+# CS Reporter Demo Configuration
+# Use this config with the demo Excel files for demonstration purposes
+
+# Path to the demo PowerPoint template
+template_path: templates/demo_template.pptx
+
+# Output directory for generated reports
+output_dir: output
+
+standard_excel_fields:
+  sheet: "Retail Tickets"
+
+  month:
+    cell: "Ticket created - Date"
+
+  prev_month:
+    cell: "Ticket created - Date"
+
+retail_excel_fields:
+  sheet: "Retail Tickets"
+
+  re_req:
+    cell:
+
+  re_prev_req:
+    cell:
+
+  re_reso:
+    cell:
+
+  re_prev_reso:
+    cell:
+
+  re_sat:
+    cell: "Ticket satisfaction rating"
+
+  re_prev_sat:
+    cell: "Ticket satisfaction rating"
+
+  re_sat_c:
+    cell: "Ticket satisfaction rating"
+
+  re_prev_sat_c:
+    cell: "Ticket satisfaction rating"
+
+supplier_excel_fields:
+  sheet: "Supplier Tickets"
+
+  su_req:
+    cell:
+
+  su_prev_req:
+    cell:
+
+  su_reso:
+    cell:
+
+  su_prev_reso:
+    cell:
+
+  su_sat:
+    cell: "Ticket satisfaction rating"
+
+  su_sat_c:
+    cell: "Ticket satisfaction rating"
+
+  su_prev_sat:
+    cell: "Ticket satisfaction rating"
+
+  su_prev_sat_c:
+    cell: "Ticket satisfaction rating"
+
+# Dynamic table mappings
+table_fields:
+  re_sup_cat:
+    sheet: "Retail Tickets"
+    start_row: 2
+
+    columns:
+      - name: "re_cat"
+        col: "Support Category"
+
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "re_cat"
+    count_column: "re_cat_count"
+    uncategorized_label: "Uncategorized"
+
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  su_sup_cat:
+    sheet: "Supplier Tickets"
+    start_row: 2
+
+    columns:
+      - name: "su_cat"
+        col: "Support Category"
+
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "su_cat"
+    count_column: "su_cat_count"
+    uncategorized_label: "Uncategorized"
+
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  top_orgs:
+    sheet: "Supplier Tickets"
+    start_row: 2
+
+    columns:
+      - name: "org_name"
+        col: "Ticket organisation name"
+
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "org_name"
+    count_column: "org_count"
+    limit: 5
+
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0

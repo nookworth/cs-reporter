@@ -1,0 +1,411 @@
+# CS Reporter
+# Schema V2
+# Schema documentation for V2 configuration.
+# **Date:** 2026-02-20
+# **Status:** ✅ Completed
+# **Component:** config
+
+operations:
+  
+  count_rows:
+    description: "Count the total number of rows in a sheet (excluding header and empty rows)"
+    use_cases:
+      - "Counting total tickets/requests"
+      - "Counting total records in a dataset"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet to count rows in"
+        example: "Tickets ADUS Tickets crea... 1"
+    
+    optional_parameters:
+      filters:
+        type: array
+        description: "List of filter conditions to exclude certain rows"
+        example: [{column: "Status", operator: "equals", value: "Closed"}]
+    
+    example:
+      operation: count_rows
+      sheet: "Tickets ADUS Tickets crea... 1"
+      source: current
+  
+  count_value:
+    description: "Count how many times a specific value appears in a column"
+    use_cases:
+      - "Counting 'good' satisfaction ratings"
+      - "Counting tickets with status 'Closed'"
+      - "Counting specific categories"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet"
+        example: "Tickets ADUS Tickets crea... 1"
+      
+      column:
+        type: string
+        description: "Name of the column to search in"
+        example: "Ticket satisfaction rating"
+      
+      value:
+        type: string
+        description: "Value to count (case-insensitive exact match)"
+        example: "good"
+    
+    optional_parameters:
+      filters:
+        type: array
+        description: "Additional filter conditions"
+        example: [{column: "Priority", operator: "equals", value: "High"}]
+    
+    example:
+      operation: count_value
+      sheet: "Tickets ADUS Tickets crea... 1"
+      column: "Ticket satisfaction rating"
+      value: "good"
+      source: current
+  
+  sum:
+    description: "Sum all numeric values in a column"
+    use_cases:
+      - "Total revenue"
+      - "Total hours worked"
+      - "Sum of quantities"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet"
+        example: "Sales Data"
+      
+      column:
+        type: string
+        description: "Name of the column containing numeric values"
+        example: "Revenue"
+    
+    optional_parameters:
+      filters:
+        type: array
+        description: "Filter conditions to include only certain rows"
+        example: [{column: "Region", operator: "equals", value: "North"}]
+    
+    example:
+      operation: sum
+      sheet: "Sales Data"
+      column: "Revenue"
+      source: current
+  
+  avg_date_diff:
+    description: "Calculate average time difference between two date columns"
+    use_cases:
+      - "Average resolution time (solved date - created date)"
+      - "Average processing time"
+      - "Average delivery time"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet"
+        example: "Tickets ADUS Tickets crea... 1"
+      
+      start_column:
+        type: string
+        description: "Name of the column containing start dates"
+        example: "Ticket created - Date"
+      
+      end_column:
+        type: string
+        description: "Name of the column containing end dates"
+        example: "Ticket solved - Date"
+    
+    optional_parameters:
+      filters:
+        type: array
+        description: "Filter conditions (e.g., exclude outliers)"
+        example: [{column: "Resolution Days", operator: "less_than_or_equal", value: 3}]
+      
+      unit:
+        type: string
+        description: "Time unit for the result"
+        default: "days"
+        valid_values: ["days", "hours", "minutes"]
+    
+    example:
+      operation: avg_date_diff
+      sheet: "Tickets ADUS Tickets crea... 1"
+      start_column: "Ticket created - Date"
+      end_column: "Ticket solved - Date"
+      filters:
+        - column: "Resolution Days"
+          operator: "less_than_or_equal"
+          value: 3
+      source: current
+  
+  parse_month:
+    description: "Parse a date value and extract the month name"
+    use_cases:
+      - "Extract 'March' from '2024-03-15'"
+      - "Get current month name for report title"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet"
+        example: "Tickets ADUS Tickets crea... 1"
+      
+      column:
+        type: string
+        description: "Name of the column containing date values"
+        example: "Ticket created - Date"
+    
+    optional_parameters: {}
+    
+    example:
+      operation: parse_month
+      sheet: "Tickets ADUS Tickets crea... 1"
+      column: "Ticket created - Date"
+      source: current
+  
+  parse_previous_month:
+    description: "Parse a date value, subtract one month, and extract the month name"
+    use_cases:
+      - "If current month is 'March', get 'February'"
+      - "Get previous month name for comparison labels"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet"
+        example: "Tickets ADUS Tickets crea... 1"
+      
+      column:
+        type: string
+        description: "Name of the column containing date values"
+        example: "Ticket created - Date"
+    
+    optional_parameters: {}
+    
+    example:
+      operation: parse_previous_month
+      sheet: "Tickets ADUS Tickets crea... 1"
+      column: "Ticket created - Date"
+      source: current
+  
+  read_value:
+    description: "Read the first non-null value from a column"
+    use_cases:
+      - "Reading a single representative value"
+      - "Getting a constant value from a column"
+    
+    required_parameters:
+      sheet:
+        type: string
+        description: "Name of the Excel sheet"
+        example: "Configuration"
+      
+      column:
+        type: string
+        description: "Name of the column to read from"
+        example: "Report Title"
+    
+    optional_parameters: {}
+    
+    example:
+      operation: read_value
+      sheet: "Configuration"
+      column: "Report Title"
+      source: current
+
+
+enums:
+  
+  source:
+    description: "Specifies which Excel file to read data from"
+    valid_values:
+      - current
+      - previous
+    default: current
+    examples:
+      - "source: current   # Read from current month's Excel file"
+      - "source: previous  # Read from previous month's Excel file"
+  
+  filter_operator:
+    description: "Comparison operator for filter conditions"
+    valid_values:
+      - equals             
+      - not_equals         
+      - greater_than       
+      - greater_than_or_equal 
+      - less_than          
+      - less_than_or_equal 
+      - contains           
+      - not_contains       
+      - starts_with        
+      - ends_with          
+      - is_null            
+      - is_not_null        
+    examples:
+      - "operator: equals"
+      - "operator: less_than_or_equal"
+      - "operator: contains"
+  
+  time_unit:
+    description: "Time unit for date difference calculations"
+    valid_values:
+      - days
+      - hours
+      - minutes
+    default: days
+    examples:
+      - "unit: days"
+      - "unit: hours"
+
+
+filter_syntax:
+  description: "Filters allow you to include/exclude rows based on conditions"
+  
+  atomic_filter:
+    description: "A single filter condition"
+    structure:
+      column:
+        type: string
+        required: true
+        description: "Name of the column to filter on"
+      
+      operator:
+        type: string
+        required: true
+        description: "Comparison operator (see filter_operator enum)"
+      
+      value:
+        type: any
+        required: false
+        description: "Value to compare against (not needed for is_null/is_not_null)"
+    
+    examples:
+      - description: "Filter rows where Status equals 'Closed'"
+        filter:
+          column: "Status"
+          operator: "equals"
+          value: "Closed"
+      
+      - description: "Filter rows where Resolution Days <= 3"
+        filter:
+          column: "Resolution Days"
+          operator: "less_than_or_equal"
+          value: 3
+      
+      - description: "Filter rows where Assignee is not null"
+        filter:
+          column: "Assignee"
+          operator: "is_not_null"
+  
+  multiple_filters:
+    description: "Multiple filters are combined with AND logic (all must match)"
+    example:
+      filters:
+        - column: "Status"
+          operator: "equals"
+          value: "Closed"
+        - column: "Priority"
+          operator: "equals"
+          value: "High"
+        - column: "Resolution Days"
+          operator: "less_than_or_equal"
+          value: 3
+
+
+complete_field_example:
+  description: "A complete field configuration with all common parameters"
+  
+  example_1:
+    description: "Count rows in current month"
+    field_name: "re_req"
+    config:
+      operation: count_rows
+      sheet: "Tickets ADUS Tickets crea... 1"
+      source: current
+  
+  example_2:
+    description: "Count 'good' ratings from previous month"
+    field_name: "re_prev_sat"
+    config:
+      operation: count_value
+      sheet: "Tickets ADUS Tickets crea... 1"
+      column: "Ticket satisfaction rating"
+      value: "good"
+      source: previous
+  
+  example_3:
+    description: "Average resolution time with filters"
+    field_name: "re_reso"
+    config:
+      operation: avg_date_diff
+      sheet: "Tickets ADUS Tickets crea... 1"
+      start_column: "Ticket created - Date"
+      end_column: "Ticket solved - Date"
+      source: current
+      filters:
+        - column: "Assignee"
+          operator: "not_equals"
+          value: "Leo Brown"
+        - column: "Resolution Days"
+          operator: "less_than_or_equal"
+          value: 3
+  
+  example_4:
+    description: "Parse current month name"
+    field_name: "month"
+    config:
+      operation: parse_month
+      sheet: "Tickets ADUS Tickets crea... 1"
+      column: "Ticket created - Date"
+      source: current
+
+
+migration_guide:
+  description: "How to convert old suffix-based configs to new operation-based configs"
+  
+  old_format_examples:
+    - old: "re_req: {cell: null}"
+      new:
+        operation: count_rows
+        sheet: "Tickets ADUS Tickets crea... 1"
+        source: current
+    
+    - old: "re_prev_req: {cell: null}"
+      new:
+        operation: count_rows
+        sheet: "Tickets ADUS Tickets crea... 1"
+        source: previous
+    
+    - old: "re_sat: {cell: 'Ticket satisfaction rating'}"
+      new:
+        operation: count_value
+        sheet: "Tickets ADUS Tickets crea... 1"
+        column: "Ticket satisfaction rating"
+        value: "good"
+        source: current
+    
+    - old: "re_reso: {cell: null}"
+      new:
+        operation: avg_date_diff
+        sheet: "Tickets ADUS Tickets crea... 1"
+        start_column: "Ticket created - Date"
+        end_column: "Ticket solved - Date"
+        source: current
+    
+    - old: "month: {cell: 'Ticket created - Date'}"
+      new:
+        operation: parse_month
+        sheet: "Tickets ADUS Tickets crea... 1"
+        column: "Ticket created - Date"
+        source: current
+  
+  suffix_to_operation_mapping:
+    _req: "count_rows operation"
+    _sat: "count_value operation with value='good'"
+    _sat_c: "count_value operation with value='good with comment'"
+    _reso: "avg_date_diff operation"
+    _prev_: "Add source: previous parameter"

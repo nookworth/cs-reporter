@@ -1,17 +1,14 @@
-# CS Reporter Configuration Schema
-# Example: New Operation-Based Configuration Format
-# This demonstrates how to use the new config-driven operations
+# CS Reporter
+# Mapping Example V2
+# Example configuration mapping for V2.
 # **Date:** 2026-02-20
 # **Status:** ✅ Completed
-# **Component:** Configuration System
-
+# **Component:** config
 
 template_path: templates/report_template.pptx
 output_dir: output
 
-
 fields:
-
   month:
     operation: parse_month
     sheet: "Tickets ADUS Tickets crea... 1"
@@ -40,7 +37,7 @@ fields:
     column: "Ticket satisfaction rating"
     value: "good"
     source: current
-
+  
   re_prev_sat:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 1"
@@ -90,7 +87,6 @@ fields:
         operator: "less_than_or_equal"
         value: 3
   
-  # Supplier fields (same pattern)
   su_req:
     operation: count_rows
     sheet: "Tickets ADUS Tickets crea... 2"
@@ -157,7 +153,6 @@ fields:
         operator: "less_than_or_equal"
         value: 3
 
-# Table fields remain unchanged
 table_fields:
   re_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 1"
