@@ -115,6 +115,8 @@ cs-reporter/
 
 **V3 brings CS Reporter to the browser with a sleek Streamlit interface:**
 
+![Web UI Output Analysis](BT-Docs/pics/WebUI_Output_Analysis.png)
+
 ### Key Enhancements
 
 - **Drag-and-Drop Interface:** No more command line prompts. Simply upload your Excel files directly in the browser.
