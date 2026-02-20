@@ -1,19 +1,12 @@
-# CS Reporter Configuration Schema
-# This file documents all valid operations and their parameters
-# Use this as a reference when creating or modifying mapping.yaml
+# CS Reporter
+# Schema V2
+# Schema documentation for V2 configuration.
 # **Date:** 2026-02-20
 # **Status:** ✅ Completed
-# **Component:** Configuration System
-
-# ==============================================================================
-# VALID OPERATIONS
-# ==============================================================================
+# **Component:** config
 
 operations:
   
-  # --------------------------------------------------------------------------
-  # count_rows: Count total rows in a sheet
-  # --------------------------------------------------------------------------
   count_rows:
     description: "Count the total number of rows in a sheet (excluding header and empty rows)"
     use_cases:
@@ -37,9 +30,6 @@ operations:
       sheet: "Tickets ADUS Tickets crea... 1"
       source: current
   
-  # --------------------------------------------------------------------------
-  # count_value: Count occurrences of a specific value
-  # --------------------------------------------------------------------------
   count_value:
     description: "Count how many times a specific value appears in a column"
     use_cases:
@@ -76,9 +66,6 @@ operations:
       value: "good"
       source: current
   
-  # --------------------------------------------------------------------------
-  # sum: Sum numeric values in a column
-  # --------------------------------------------------------------------------
   sum:
     description: "Sum all numeric values in a column"
     use_cases:
@@ -109,9 +96,6 @@ operations:
       column: "Revenue"
       source: current
   
-  # --------------------------------------------------------------------------
-  # avg_date_diff: Calculate average time difference between two dates
-  # --------------------------------------------------------------------------
   avg_date_diff:
     description: "Calculate average time difference between two date columns"
     use_cases:
@@ -158,9 +142,6 @@ operations:
           value: 3
       source: current
   
-  # --------------------------------------------------------------------------
-  # parse_month: Extract month name from a date
-  # --------------------------------------------------------------------------
   parse_month:
     description: "Parse a date value and extract the month name"
     use_cases:
@@ -186,9 +167,6 @@ operations:
       column: "Ticket created - Date"
       source: current
   
-  # --------------------------------------------------------------------------
-  # parse_previous_month: Extract previous month name from a date
-  # --------------------------------------------------------------------------
   parse_previous_month:
     description: "Parse a date value, subtract one month, and extract the month name"
     use_cases:
@@ -214,9 +192,6 @@ operations:
       column: "Ticket created - Date"
       source: current
   
-  # --------------------------------------------------------------------------
-  # read_value: Read first non-null value from a column
-  # --------------------------------------------------------------------------
   read_value:
     description: "Read the first non-null value from a column"
     use_cases:
@@ -242,13 +217,9 @@ operations:
       column: "Report Title"
       source: current
 
-# ==============================================================================
-# VALID ENUM VALUES
-# ==============================================================================
 
 enums:
   
-  # Source: Which Excel file to read from
   source:
     description: "Specifies which Excel file to read data from"
     valid_values:
@@ -259,28 +230,26 @@ enums:
       - "source: current   # Read from current month's Excel file"
       - "source: previous  # Read from previous month's Excel file"
   
-  # Filter operators: How to compare values in filters
   filter_operator:
     description: "Comparison operator for filter conditions"
     valid_values:
-      - equals              # Exact match (case-insensitive for strings)
-      - not_equals          # Not equal to
-      - greater_than        # Numeric: >
-      - greater_than_or_equal  # Numeric: >=
-      - less_than           # Numeric: <
-      - less_than_or_equal  # Numeric: <=
-      - contains            # String contains substring
-      - not_contains        # String does not contain substring
-      - starts_with         # String starts with prefix
-      - ends_with           # String ends with suffix
-      - is_null             # Value is null/empty
-      - is_not_null         # Value is not null/empty
+      - equals             
+      - not_equals         
+      - greater_than       
+      - greater_than_or_equal 
+      - less_than          
+      - less_than_or_equal 
+      - contains           
+      - not_contains       
+      - starts_with        
+      - ends_with          
+      - is_null            
+      - is_not_null        
     examples:
       - "operator: equals"
       - "operator: less_than_or_equal"
       - "operator: contains"
   
-  # Time units: For date difference calculations
   time_unit:
     description: "Time unit for date difference calculations"
     valid_values:
@@ -292,9 +261,6 @@ enums:
       - "unit: days"
       - "unit: hours"
 
-# ==============================================================================
-# FILTER SYNTAX
-# ==============================================================================
 
 filter_syntax:
   description: "Filters allow you to include/exclude rows based on conditions"
@@ -349,9 +315,6 @@ filter_syntax:
           operator: "less_than_or_equal"
           value: 3
 
-# ==============================================================================
-# COMPLETE FIELD EXAMPLE
-# ==============================================================================
 
 complete_field_example:
   description: "A complete field configuration with all common parameters"
@@ -400,9 +363,6 @@ complete_field_example:
       column: "Ticket created - Date"
       source: current
 
-# ==============================================================================
-# MIGRATION GUIDE
-# ==============================================================================
 
 migration_guide:
   description: "How to convert old suffix-based configs to new operation-based configs"

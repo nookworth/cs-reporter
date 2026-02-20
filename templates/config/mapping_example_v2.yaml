@@ -1,0 +1,203 @@
+# CS Reporter
+# Mapping Example V2
+# Example configuration mapping for V2.
+# **Date:** 2026-02-20
+# **Status:** ✅ Completed
+# **Component:** config
+
+template_path: templates/report_template.pptx
+output_dir: output
+
+fields:
+  month:
+    operation: parse_month
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket created - Date"
+    source: current
+  
+  prev_month:
+    operation: parse_previous_month
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket created - Date"
+    source: current
+  
+  re_req:
+    operation: count_rows
+    sheet: "Tickets ADUS Tickets crea... 1"
+    source: current
+  
+  re_prev_req:
+    operation: count_rows
+    sheet: "Tickets ADUS Tickets crea... 1"
+    source: previous
+  
+  re_sat:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket satisfaction rating"
+    value: "good"
+    source: current
+  
+  re_prev_sat:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket satisfaction rating"
+    value: "good"
+    source: previous
+  
+  re_sat_c:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket satisfaction rating"
+    value: "good with comment"
+    source: current
+  
+  re_prev_sat_c:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket satisfaction rating"
+    value: "good with comment"
+    source: previous
+  
+  re_reso:
+    operation: avg_date_diff
+    sheet: "Tickets ADUS Tickets crea... 1"
+    start_column: "Ticket created - Date"
+    end_column: "Ticket solved - Date"
+    source: current
+    filters:
+      - column: "Assignee name"
+        operator: "not_equals"
+        value: "Leo Brown"
+      - column: "Resolution Days"
+        operator: "less_than_or_equal"
+        value: 3
+  
+  re_prev_reso:
+    operation: avg_date_diff
+    sheet: "Tickets ADUS Tickets crea... 1"
+    start_column: "Ticket created - Date"
+    end_column: "Ticket solved - Date"
+    source: previous
+    filters:
+      - column: "Assignee name"
+        operator: "not_equals"
+        value: "Leo Brown"
+      - column: "Resolution Days"
+        operator: "less_than_or_equal"
+        value: 3
+  
+  su_req:
+    operation: count_rows
+    sheet: "Tickets ADUS Tickets crea... 2"
+    source: current
+  
+  su_prev_req:
+    operation: count_rows
+    sheet: "Tickets ADUS Tickets crea... 2"
+    source: previous
+  
+  su_sat:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 2"
+    column: "Ticket satisfaction rating"
+    value: "good"
+    source: current
+  
+  su_prev_sat:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 2"
+    column: "Ticket satisfaction rating"
+    value: "good"
+    source: previous
+  
+  su_sat_c:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 2"
+    column: "Ticket satisfaction rating"
+    value: "good with comment"
+    source: current
+  
+  su_prev_sat_c:
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 2"
+    column: "Ticket satisfaction rating"
+    value: "good with comment"
+    source: previous
+  
+  su_reso:
+    operation: avg_date_diff
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_column: "Ticket created - Date"
+    end_column: "Ticket solved - Date"
+    source: current
+    filters:
+      - column: "Assignee name"
+        operator: "not_equals"
+        value: "Leo Brown"
+      - column: "Resolution Days"
+        operator: "less_than_or_equal"
+        value: 3
+  
+  su_prev_reso:
+    operation: avg_date_diff
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_column: "Ticket created - Date"
+    end_column: "Ticket solved - Date"
+    source: previous
+    filters:
+      - column: "Assignee name"
+        operator: "not_equals"
+        value: "Leo Brown"
+      - column: "Resolution Days"
+        operator: "less_than_or_equal"
+        value: 3
+
+table_fields:
+  re_sup_cat:
+    sheet: "Tickets ADUS Tickets crea... 1"
+    start_row: 2
+    columns:
+      - name: "re_cat"
+        col: "Support Category"
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "re_cat"
+    count_column: "re_cat_count"
+    uncategorized_label: "Uncategorized"
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+  
+  su_sup_cat:
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_row: 2
+    columns:
+      - name: "su_cat"
+        col: "Support Category"
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "su_cat"
+    count_column: "su_cat_count"
+    uncategorized_label: "Uncategorized"
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+  
+  top_orgs:
+    sheet: "Tickets ADUS Tickets crea... 2"
+    start_row: 2
+    columns:
+      - name: "org_name"
+        col: "Ticket organisation name"
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "org_name"
+    count_column: "org_count"
+    limit: 5
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0

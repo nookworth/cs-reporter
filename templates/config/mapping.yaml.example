@@ -1,0 +1,189 @@
+# CS Reporter Configuration
+# This file maps Excel operations to PowerPoint placeholders
+
+# Path to the PowerPoint template (relative to project root)
+template_path: templates/report_template.pptx
+
+# Output directory for generated reports (relative to project root)
+output_dir: output
+
+# Current month field extraction operations
+current_month_fields:
+  # Extract month from date column
+  month:
+    sheet: "Tickets ADUS Tickets crea...1"
+    operation: "parse_month"
+    column: "B"
+
+  # Retail (RE) fields
+  re_req:
+    sheet: "Tickets ADUS Tickets crea...1"
+    operation: "count_rows"
+
+  re_reso:
+    sheet: "Tickets ADUS Tickets crea...1"
+    operation: "avg_date_diff"
+    date_col_start: "B"
+    date_col_end: "N"
+    max_days: 3
+
+  re_sat:
+    sheet: "Tickets ADUS Tickets crea...1"
+    operation: "count_value"
+    column: "P"
+    value: "good"
+
+  re_sat_c:
+    sheet: "Tickets ADUS Tickets crea...1"
+    operation: "count_value"
+    column: "P"
+    value: "good with comment"
+
+  # Supplier (SU) fields
+  su_req:
+    sheet: "Tickets ADUS Tickets crea...2"
+    operation: "count_rows"
+
+  su_reso:
+    sheet: "Tickets ADUS Tickets crea...2"
+    operation: "avg_date_diff"
+    date_col_start: "B"
+    date_col_end: "N"
+    max_days: 3
+
+  su_sat:
+    sheet: "Tickets ADUS Tickets crea...2"
+    operation: "count_value"
+    column: "P"
+    value: "good"
+
+  su_sat_c:
+    sheet: "Tickets ADUS Tickets crea...2"
+    operation: "count_value"
+    column: "P"
+    value: "good with comment"
+
+# Previous month fields (loaded from history or previous Excel file)
+previous_month_fields:
+  prev_month:
+    source: "month"
+
+  re_prev_req:
+    source: "re_req"
+
+  re_prev_reso:
+    source: "re_reso"
+
+  re_prev_sat:
+    source: "re_sat"
+
+  re_prev_sat_c:
+    source: "re_sat_c"
+
+  su_prev_req:
+    source: "su_req"
+
+  su_prev_reso:
+    source: "su_reso"
+
+  su_prev_sat:
+    source: "su_sat"
+
+  su_prev_sat_c:
+    source: "su_sat_c"
+
+# Dynamic table mappings
+table_fields:
+  # Retail support categories table
+  re_sup_cat:
+    sheet: "Tickets ADUS Tickets crea...1"
+    start_row: 2
+
+    columns:
+      - name: "re_cat"
+        col: "W"  # Column letter or heading name
+
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "re_cat"
+    count_column: "re_cat_count"
+
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # Supplier support categories table
+  su_sup_cat:
+    sheet: "Tickets ADUS Tickets crea...2"
+    start_row: 2
+
+    columns:
+      - name: "su_cat"
+        col: "W"
+
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "su_cat"
+    count_column: "su_cat_count"
+
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+  # Top organizations table
+  top_orgs:
+    sheet: "Tickets ADUS Tickets crea...1"  # Or whichever sheet has org data
+    start_row: 2
+
+    columns:
+      - name: "org_name"
+        col: "M"  # Update with actual column
+
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "org_name"
+    count_column: "org_count"
+
+    format_values: true
+    value_format:
+      type: "number"
+      decimals: 0
+
+# OPERATIONS REFERENCE:
+#
+# 1. parse_month - Extract month from a date column
+#    Required: sheet, operation, column
+#    Example:
+#      month:
+#        sheet: "Data"
+#        operation: "parse_month"
+#        column: "B"
+#
+# 2. count_rows - Count total rows in sheet
+#    Required: sheet, operation
+#    Example:
+#      total_tickets:
+#        sheet: "Tickets"
+#        operation: "count_rows"
+#
+# 3. avg_date_diff - Average date difference between two columns
+#    Required: sheet, operation, date_col_start, date_col_end
+#    Optional: max_days (default: 999)
+#    Example:
+#      avg_resolution_time:
+#        sheet: "Tickets"
+#        operation: "avg_date_diff"
+#        date_col_start: "B"
+#        date_col_end: "N"
+#        max_days: 3
+#
+# 4. count_value - Count occurrences of specific text
+#    Required: sheet, operation, column, value
+#    Example:
+#      satisfied_count:
+#        sheet: "Feedback"
+#        operation: "count_value"
+#        column: "P"
+#        value: "good"
