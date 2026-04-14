@@ -45,6 +45,9 @@ output/history/*
 # Claude
 .claude/*.local*
 
+# Ralph
+.ralph/
+
 # Future plans (internal notes)
 future_plans/
 

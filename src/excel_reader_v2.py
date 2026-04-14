@@ -6,28 +6,37 @@
 # **Component:** src
 
 from pathlib import Path
+from typing import Any
 
-from . import excel_utils_v2 as excel_utils 
+from . import excel_utils_v2 as excel_utils
 
 
 class ExcelReader:
+    """Excel file reader that extracts data based on a configuration."""
 
-    def __init__(self, excel_path, config, previous_excel_path=None):
+    def __init__(
+        self,
+        excel_path: Path | str,
+        config: dict[str, Any],
+        previous_excel_path: Path | str | None = None,
+    ) -> None:
+        """Initialize the ExcelReader with file paths and configuration."""
         self.excel_path = Path(excel_path)
         self.previous_excel_path = (
             Path(previous_excel_path) if previous_excel_path else None
         )
         self.config = config
-        
+
         self.fields = config.get("fields", {})
-        
+
         self.table_fields = config.get("table_fields", {})
         self.standard_excel_fields = config.get("standard_excel_fields", {})
         self.retail_excel_fields = config.get("retail_excel_fields", {})
         self.supplier_excel_fields = config.get("supplier_excel_fields", {})
 
-    def extract_data(self):
-        data = {}
+    def extract_data(self) -> dict[str, Any]:
+        """Extract all data from Excel file based on configuration."""
+        data: dict[str, Any] = {}
 
         if self.fields:
             print("\nExtracting operation-based fields...")
@@ -38,16 +47,22 @@ class ExcelReader:
                 except Exception as e:
                     print(f"  Warning: Error reading '{field_name}': {e}")
                     data[field_name] = None
-        
+
         else:
             print("\nExtracting standard fields...")
-            data.update(self._extract_field_group(self.standard_excel_fields, "standard"))
+            data.update(
+                self._extract_field_group(self.standard_excel_fields, "standard")
+            )
             print("\nExtracting retail fields...")
             data.update(self._extract_field_group(self.retail_excel_fields, "retail"))
             print("\nExtracting supplier fields...")
-            data.update(self._extract_field_group(self.supplier_excel_fields, "supplier"))
+            data.update(
+                self._extract_field_group(self.supplier_excel_fields, "supplier")
+            )
 
-        print(f"\nExtracting table data... (found {len(self.table_fields)} tables configured)")
+        print(
+            f"\nExtracting table data... (found {len(self.table_fields)} tables configured)"
+        )
         for table_name, table_config in self.table_fields.items():
             try:
                 sheet = table_config["sheet"]
@@ -70,10 +85,14 @@ class ExcelReader:
 
                 if uncategorized_label:
                     uncategorized_items = [
-                        item for item in value_counts if item["value"] == uncategorized_label
+                        item
+                        for item in value_counts
+                        if item["value"] == uncategorized_label
                     ]
                     categorized_items = [
-                        item for item in value_counts if item["value"] != uncategorized_label
+                        item
+                        for item in value_counts
+                        if item["value"] != uncategorized_label
                     ]
                     value_counts = categorized_items + uncategorized_items
 
@@ -92,62 +111,74 @@ class ExcelReader:
             except Exception as e:
                 raise ValueError(f"Error reading table '{table_name}': {e}") from e
 
-        print(f"\nExtracted fields: {', '.join([k for k in data if not isinstance(data[k], list)])}")
+        print(
+            f"\nExtracted fields: {', '.join([k for k in data if not isinstance(data[k], list)])}"
+        )
         return data
 
-    def _dispatch_operation(self, field_name, field_config):
+    def _dispatch_operation(self, field_name: str, field_config: dict[str, Any]) -> Any:
+        """Execute a single operation based on field configuration."""
         operation = field_config["operation"]
         source = field_config.get("source", "current")
-        excel_path = self.previous_excel_path if source == "previous" else self.excel_path
-        
+        excel_path = (
+            self.previous_excel_path if source == "previous" else self.excel_path
+        )
+
         if source == "previous" and not self.previous_excel_path:
             print(f"  Warning: '{field_name}' requires previous file but none provided")
             return None
-        
+
         sheet = field_config["sheet"]
         filters = field_config.get("filters")
-        
+
         if operation == "count_rows":
             return excel_utils.count_rows(excel_path, sheet, filters)
-        
+
         elif operation == "count_value":
             column = field_config["column"]
             value = field_config["value"]
-            return excel_utils.count_column_value(excel_path, sheet, column, value, filters)
-        
+            return excel_utils.count_column_value(
+                excel_path, sheet, column, value, filters
+            )
+
         elif operation == "sum":
             column = field_config["column"]
             return excel_utils.sum_column(excel_path, sheet, column, filters)
-        
+
         elif operation == "avg_date_diff":
             start_col = field_config["start_column"]
             end_col = field_config["end_column"]
             return excel_utils.calculate_average_resolution_time(
                 excel_path, sheet, start_col, end_col, filters
             )
-        
+
         elif operation == "parse_month":
             column = field_config["column"]
             value = excel_utils.read_column_value(excel_path, sheet, column)
             return excel_utils.parse_month_from_date(value)
-        
+
         elif operation == "parse_previous_month":
             column = field_config["column"]
             value = excel_utils.read_column_value(excel_path, sheet, column)
             return excel_utils.parse_previous_month_from_date(value)
-        
+
         elif operation == "read_value":
             column = field_config["column"]
             return excel_utils.read_column_value(excel_path, sheet, column)
-        
-        else:
-            raise ValueError(f"Unknown operation '{operation}' for field '{field_name}'")
 
-    def _extract_field_group(self, field_group, group_name):
+        else:
+            raise ValueError(
+                f"Unknown operation '{operation}' for field '{field_name}'"
+            )
+
+    def _extract_field_group(
+        self, field_group: dict[str, Any], group_name: str
+    ) -> dict[str, Any]:
+        """Extract a group of fields (standard, retail, or supplier)."""
         if not field_group:
             return {}
 
-        data = {}
+        data: dict[str, Any] = {}
 
         default_sheet = field_group.get("sheet")
 
@@ -160,7 +191,7 @@ class ExcelReader:
 
             try:
                 sheet = field_config.get("sheet", default_sheet)
-                cell = field_config.get("cell") 
+                cell = field_config.get("cell")
 
                 is_prev_field = "_prev_" in field_name
                 excel_path = (
@@ -181,7 +212,6 @@ class ExcelReader:
                     data[field_name] = value
                     continue
 
-                
                 if field_name.endswith("_sat_c"):
                     if cell is None or cell == "":
                         print(f"  Skipping '{field_name}': no cell configuration")
@@ -196,7 +226,7 @@ class ExcelReader:
                     print(f"  → Found {value} occurrences")
                     data[field_name] = value
                     continue
-                    
+
                 elif field_name.endswith("_sat"):
                     if cell is None or cell == "":
                         print(f"  Skipping '{field_name}': no cell configuration")
