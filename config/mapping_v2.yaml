@@ -5,7 +5,7 @@
 # **Status:** ✅ Completed
 # **Component:** config
 
-template_path: templates/demo_template.pptx
+template_path: templates/report_template.pptx
 
 output_dir: output
 
@@ -15,110 +15,110 @@ fields:
     sheet: "Tickets ADUS Tickets crea... 1"
     column: "Ticket created - Date"
     source: current
-  
+
   prev_month:
     operation: parse_previous_month
     sheet: "Tickets ADUS Tickets crea... 1"
     column: "Ticket created - Date"
     source: current
-  
+
   re_req:
     operation: count_rows
     sheet: "Tickets ADUS Tickets crea... 1"
     source: current
-  
+
   re_sat:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 1"
     column: "Ticket satisfaction rating"
     value: "good"
     source: current
-  
+
   re_sat_c:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 1"
     column: "Ticket satisfaction rating"
     value: "good with comment"
     source: current
-  
+
   re_reso:
     operation: avg_date_diff
     sheet: "Tickets ADUS Tickets crea... 1"
     start_column: "Ticket created - Date"
     end_column: "Ticket solved - Date"
     source: current
-  
+
   re_prev_req:
     operation: count_rows
     sheet: "Tickets ADUS Tickets crea... 1"
     source: previous
-  
+
   re_prev_sat:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 1"
     column: "Ticket satisfaction rating"
     value: "good"
     source: previous
-  
+
   re_prev_sat_c:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 1"
     column: "Ticket satisfaction rating"
     value: "good with comment"
     source: previous
-  
+
   re_prev_reso:
     operation: avg_date_diff
     sheet: "Tickets ADUS Tickets crea... 1"
     start_column: "Ticket created - Date"
     end_column: "Ticket solved - Date"
     source: previous
-  
+
   su_req:
     operation: count_rows
     sheet: "Tickets ADUS Tickets crea... 2"
     source: current
-  
+
   su_sat:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 2"
     column: "Ticket satisfaction rating"
     value: "good"
     source: current
-  
+
   su_sat_c:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 2"
     column: "Ticket satisfaction rating"
     value: "good with comment"
     source: current
-  
+
   su_reso:
     operation: avg_date_diff
     sheet: "Tickets ADUS Tickets crea... 2"
     start_column: "Ticket created - Date"
     end_column: "Ticket solved - Date"
     source: current
-  
+
   su_prev_req:
     operation: count_rows
     sheet: "Tickets ADUS Tickets crea... 2"
     source: previous
-  
+
   su_prev_sat:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 2"
     column: "Ticket satisfaction rating"
     value: "good"
     source: previous
-  
+
   su_prev_sat_c:
     operation: count_value
     sheet: "Tickets ADUS Tickets crea... 2"
     column: "Ticket satisfaction rating"
     value: "good with comment"
     source: previous
-  
+
   su_prev_reso:
     operation: avg_date_diff
     sheet: "Tickets ADUS Tickets crea... 2"
@@ -129,17 +129,17 @@ fields:
 table_fields:
   re_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 1"
-    start_row: 2 
+    start_row: 2
 
     columns:
-      - name: "re_cat"             
+      - name: "re_cat"
         col: "Support Category"
 
-    aggregate: true                
-    aggregation_type: "count"      
-    group_by: "re_cat"             
-    count_column: "re_cat_count"   
-    uncategorized_label: "Uncategorized" 
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "re_cat"
+    count_column: "re_cat_count"
+    uncategorized_label: "Uncategorized"
 
     format_values: true
     value_format:
@@ -148,17 +148,17 @@ table_fields:
 
   su_sup_cat:
     sheet: "Tickets ADUS Tickets crea... 2"
-    start_row: 2 
+    start_row: 2
 
     columns:
-      - name: "su_cat"             
+      - name: "su_cat"
         col: "Support Category"
 
-    aggregate: true                
-    aggregation_type: "count"      
-    group_by: "su_cat"             
-    count_column: "su_cat_count"   
-    uncategorized_label: "Uncategorized" 
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "su_cat"
+    count_column: "su_cat_count"
+    uncategorized_label: "Uncategorized"
 
     format_values: true
     value_format:
@@ -167,17 +167,17 @@ table_fields:
 
   top_orgs:
     sheet: "Tickets ADUS Tickets crea... 2"
-    start_row: 2 
+    start_row: 2
 
     columns:
-      - name: "org_name"           
+      - name: "org_name"
         col: "Ticket organisation name"
 
-    aggregate: true                
-    aggregation_type: "count"      
-    group_by: "org_name"           
-    count_column: "org_count"      
-    limit: 5                       
+    aggregate: true
+    aggregation_type: "count"
+    group_by: "org_name"
+    count_column: "org_count"
+    limit: 5
 
     format_values: true
     value_format:

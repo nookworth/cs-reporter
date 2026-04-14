@@ -309,11 +309,3 @@ def calculate_average_resolution_time(
     average_days = average_hours / 24
 
     return round(average_days, 2)
-
-
-# for testing from command line
-if __name__ == "__main__":
-    calculate_average_resolution_time(
-        excel_path="~/Downloads/ADUS Monthly review (21).xlsx",
-        sheet_name="Tickets ADUS Tickets crea... 1",
-    )
