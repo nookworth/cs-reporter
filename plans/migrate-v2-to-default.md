@@ -77,12 +77,12 @@ not orphan a V2 import).
   Confirm `tests/test_smoke.py` passes on `main` before any change.
   RESULT: Branch created from `refactor/retire-v1`. Gate: V2/V3 imports OK, test_smoke passes. Pre-existing: 1 test_filters failure (case sensitivity), 36 ruff formatting issues. Baseline recorded.
 
-- [ ] **0.2 Capture a V1 reference report.** Run the existing V1 CLI on the
+- [x] **0.2 Capture a V1 reference report.** Run the existing V1 CLI on the
   demo data (`python -m src.main --config config/demo_mapping.yaml` or via
   the smoke fixtures) and save the generated `.pptx` to
   `plans/_migration_artifacts/v1_reference.pptx` (gitignored). This is the
   human comparison target for parity in Step 1.
-  RESULT:
+  RESULT: V1 reference report generated (72 replacements, 3 tables of 8/8/5 rows) -> plans/_migration_artifacts/v1_reference.pptx. Added artifacts dir to .gitignore.
 
 ### Phase 1 — Close the V1↔V2 gap before flipping anything
 

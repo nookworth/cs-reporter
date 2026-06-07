@@ -51,5 +51,8 @@ output/history/*
 # Future plans (internal notes)
 future_plans/
 
+# Migration artifacts (V1 reference reports, diffs)
+plans/_migration_artifacts/
+
 # Distribution
 **/*.zip
