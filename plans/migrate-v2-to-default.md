@@ -141,10 +141,10 @@ not orphan a V2 import).
   change the pipeline logic.
   RESULT: Changed config_v2.py default from mapping.yaml→mapping_v2.yaml. Fixed help text in main_v2.py. Stripped trailing whitespace from imports, root.withdraw(), root.destroy(). Gate: imports OK, smoke passes, ruff clean.
 
-- [ ] **3.3 Implement the Step 2.1 writer choice in `main_v2.py`.** If (A):
+- [x] **3.3 Implement the Step 2.1 writer choice in `main_v2.py`.** If (A):
   import and instantiate `PowerPointWriterV3` instead of `PowerPointWriter`.
   If (B): no code change — check off with `RESULT: option B, no change`.
-  RESULT:
+  RESULT: Option A: changed import to `from .ppt_writer_v3 import PowerPointWriterV3 as PowerPointWriter`. Gate: imports OK, smoke passes, pytest same baseline.
 
 - [ ] **3.4 Reinstall and smoke the real command.** Run `pip install -e .`,
   then `reporter --config <PROD_CONFIG>` (or pipe a demo config) and confirm

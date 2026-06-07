@@ -12,7 +12,7 @@ from tkinter import filedialog
 
 from .config_v2 import load_config
 from .excel_reader_v2 import ExcelReader
-from .ppt_writer import PowerPointWriter
+from .ppt_writer_v3 import PowerPointWriterV3 as PowerPointWriter
 
 
 def parse_args():
