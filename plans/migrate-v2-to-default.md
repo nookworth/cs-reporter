@@ -86,12 +86,12 @@ not orphan a V2 import).
 
 ### Phase 1 — Close the V1↔V2 gap before flipping anything
 
-- [ ] **1.1 Pin the canonical V2 production config.** Decide which V2-format
+- [x] **1.1 Pin the canonical V2 production config.** Decide which V2-format
   file is the prod default (recommended: `config/mapping_v2.yaml`). Confirm
   it loads via `config_v2.load_config` and that `template_path` resolves to a
   real template (`templates/report_template.pptx` per cleanup-spec item 3).
   Record the chosen path here; later steps reference it as `<PROD_CONFIG>`.
-  RESULT:
+  RESULT: `<PROD_CONFIG>` = `config/mapping_v2.yaml`. Loads fine: template_path→templates/report_template.pptx (exists, 233KB), 18 fields, 3 table_fields.
 
 - [ ] **1.2 Verify `config_v2.load_config(None)` default.** Read
   `src/config_v2.py`. Confirm what path it loads when `config_path=None`. If
