@@ -4,9 +4,7 @@
 
 Transforms Excel ticket exports into formatted PowerPoint presentations with month-over-month comparisons.
 
-> **Note:** This project has two versions:
-> - **V1 (Original)** - Created by [Your Friend's Name] - Suffix-based configuration
-> - **V2 (Refactored)** - Enhanced by [Your Name] - Operation-based configuration with advanced features
+> **Note:** V2 (operation-based) is the default. V1 (original suffix-based) has been retired.
 
 ---
 
@@ -34,14 +32,9 @@ Then:
 
 ### 💻 Command Line
 
-**V1 (Original):**
+**V2 (Default):**
 ```bash
-python -m src.main
-```
-
-**V2 (Refactored):**
-```bash
-python run_v2.py
+reporter
 ```
 
 **Perfect for:** Automation, scripting, scheduled tasks
@@ -92,8 +85,7 @@ cs-reporter/
 ├── run_v2.bat            # V2 launcher (Windows)
 ├── USER_GUIDE.md         # Complete documentation
 ├── config/
-│   ├── mapping.yaml      # V1 config (suffix-based)
-│   ├── mapping_v2.yaml   # V2 config (operation-based)
+│   ├── mapping_v2.yaml   # V2 config (operation-based, default)
 │   ├── demo_mapping_v2.yaml  # V2 demo config
 │   └── schema_v2.yaml    # V2 operation documentation
 ├── templates/
@@ -101,9 +93,7 @@ cs-reporter/
 │   └── demo_template.pptx    # Demo template
 ├── output/               # Generated reports go here
 ├── src/                  # Source code
-│   ├── main.py          # V1 entry point
-│   ├── main_v2.py       # V2 entry point
-│   ├── config.py        # V1 config loader
+│   ├── main_v2.py       # V2 entry point (default)
 │   ├── config_v2.py     # V2 config loader (with validation)
 │   └── ...              # Other modules
 └── BT-Docs/             # Technical documentation
@@ -123,7 +113,7 @@ cs-reporter/
 - **Instant Preview:** View the first 5 rows and available tabs of your uploaded Excel files to ensure you clicked the right ones!
 - **Data Extracted Preview:** See exactly what metrics and tables were successfully pulled before the PowerPoint is generated.
 - **One-Click Download:** Get your generated PowerPoint right in the browser.
-- **Dual Support:** Easily toggle between V1 and V2 configuration files within the UI.
+- **V2 Config Support:** Uses V2 configuration files within the UI.
 
 ### How to Use V3
 
@@ -223,38 +213,34 @@ python -m src.main_v2 --config config/mapping_v2.yaml
 ### V2 Documentation
 
 - 📖 **Schema Reference:** `config/schema_v2.yaml`
-- 🚀 **How to Run:** `BT-Docs/HOW_TO_RUN_V1_V2.md`
+- 🚀 **How to Run:** `BT-Docs/V2/HOW_TO_RUN_V1_V2.md`
 
-### Migration from V1 to V2
+### V1 → V2 Migration (Complete)
 
-Both versions work independently. To migrate:
+V2 is now the default (V1 has been retired). To migrate from V1 configs:
 
-1. **Test V2 with demo data:**
-   ```bash
-   python test_v2_config.py
-   ```
-
-2. **Convert your config:**
+1. **Convert your config:**
    - Use `config/mapping_v2.yaml` as reference
    - See `config/schema_v2.yaml` for operation details
 
-3. **Run side-by-side:**
-   - Keep using V1: `python -m src.main`
-   - Test V2: `python run_v2.py`
-   - Use UI V3: `streamlit run app_v3.py`
+2. **Run with V2:**
+   ```bash
+   reporter
+   # or
+   python -m src.main_v2 --config config/mapping_v2.yaml
+   ```
 
-4. **Switch when ready:**
-   - V2 is production-ready
-   - Fully tested and validated
+3. **For the web UI:**
+   ```bash
+   streamlit run app_v3.py
+   ```
 
 ---
 
 ## 📝 Customization
 
 ### Excel Structure
-**V1:** Edit `config/mapping.yaml` to match your Excel file's sheet names and column headers.
-
-**V2:** Edit `config/mapping_v2.yaml` using operation-based format. See `config/schema_v2.yaml` for all available operations.
+Edit `config/mapping_v2.yaml` using the operation-based format. See `config/schema_v2.yaml` for all available operations.
 
 ### Report Design
 Edit `templates/report_template.pptx` to customize the look and feel of your reports.
@@ -268,9 +254,7 @@ See **USER_GUIDE.md** for detailed customization instructions.
 ### "Command not found"
 Make sure you're using the correct launcher:
 
-**V1:** `python -m src.main`
-
-**V2:** `python run_v2.py` or `run_v2.bat`
+**V2:** `reporter` or `python run_v2.py` or `run_v2.bat`
 
 ### "Sheet not found" or "Column not found"
 Update your config file with actual Excel sheet names and column headers.
@@ -288,7 +272,7 @@ See **USER_GUIDE.md** for comprehensive troubleshooting.
 ### Output File
 - **Location:** `output/` folder
 - **Format:** PowerPoint (.pptx)
-- **Naming:** `report_YYYYMMDD_HHMMSS.pptx` (V1) or `demo_report_YYYYMMDD_HHMMSS.pptx` (V2)
+- **Naming:** `demo_report_YYYYMMDD_HHMMSS.pptx` (V2)
 - **Example:** `output/report_20260220_162606.pptx`
 
 ### Metrics (Current vs. Previous)
@@ -323,8 +307,7 @@ Done!
 ## 💡 Support & Documentation
 
 📖 **Full Documentation:** See `USER_GUIDE.md`
-⚙️ **V1 Configuration:** Edit `config/mapping.yaml`
-⚙️ **V2 Configuration:** Edit `config/mapping_v2.yaml`
+⚙️ **Configuration:** Edit `config/mapping_v2.yaml`
 📚 **V2 Schema:** See `config/schema_v2.yaml`
 🎨 **Template Design:** Edit `templates/report_template.pptx`
 📁 **Technical Docs:** See `BT-Docs/` folder
@@ -333,18 +316,16 @@ Done!
 
 ## 🎯 Example Workflow
 
-### V1 (Original):
-
 **Windows:**
 ```cmd
 # First time
 setup.bat
 
 # Generate December report
-python -m src.main
+reporter
 # Select: December_Tickets.xlsx (current)
 # Select: November_Tickets.xlsx (previous)
-# Output: output/report_20260106_143022.pptx
+# Output: output/demo_report_YYYYMMDD_HHMMSS.pptx
 ```
 
 **macOS/Linux:**
@@ -353,74 +334,40 @@ python -m src.main
 ./setup.sh
 
 # Generate December report
-python -m src.main
+reporter
 # Select: December_Tickets.xlsx (current)
 # Select: November_Tickets.xlsx (previous)
-# Output: output/report_20260106_143022.pptx
-```
-
-### V2 (Refactored):
-
-**Windows:**
-```cmd
-# First time
-setup.bat
-
-# Generate December report with V2
-run_v2.bat
-# Select: December_Tickets.xlsx (current)
-# Select: November_Tickets.xlsx (previous)
-# Output: output/demo_report_20260220_162606.pptx
-```
-
-**macOS/Linux:**
-```bash
-# First time
-./setup.sh
-
-# Generate December report with V2
-python run_v2.py
-# Select: December_Tickets.xlsx (current)
-# Select: November_Tickets.xlsx (previous)
-# Output: output/demo_report_20260220_162606.pptx
+# Output: output/demo_report_YYYYMMDD_HHMMSS.pptx
 ```
 
 ---
 
 ## 🛠️ Technical Details
 
-### V1 (Original)
-- **Language:** Python 3
-- **Key Libraries:** pandas, python-pptx, PyYAML
-- **Architecture:** Suffix-based operation detection
-- **Config:** `config/mapping.yaml`
-
-### V2 (Refactored)
+### V2 (CLI)
 - **Language:** Python 3
 - **Key Libraries:** pandas, python-pptx, PyYAML
 - **Architecture:** Operation-based with validation
 - **Config:** `config/mapping_v2.yaml`
-- **Features:** Configurable filters, 12 operators, 7 operations
+- **Features:** Configurable filters, 12 operators, 7 operations, automatic charts
 - **Validation:** Config validation on load
 
 ### V3 (Web UI)
 - **Language:** Python 3
 - **Key Libraries:** streamlit, pandas, python-pptx, PyYAML
-- **Architecture:** Streamlit interactive web server wrapping V1/V2 functionality
+- **Architecture:** Streamlit interactive web server wrapping V2 functionality
 - **Features:** Drag-and-drop file upload, data previews, directly downloadable output
 
 ---
 
 ## 👥 Contributors
 
-- **V1 (Original):** [Your Friend's Name] - Initial implementation
+- **V1 (Original):** [Your Friend's Name] - Initial implementation (retired)
 - **V2 (Refactored):** [Your Name] - Operation-based architecture, filters, validation
 - **V3 (Web UI):** [Your Name] - Streamlit web UI integration
 
 ---
 
 **Ready to generate your first report?**
-- **V1 Users:** Run `python -m src.main`
-- **V2 Users:** Run `python run_v2.py`
-- **V3 Users:** Run `streamlit run app_v3.py`
-- **New Users:** Try V3 Web UI with `streamlit run app_v3.py`
+- **CLI:** Run `reporter`
+- **Web UI:** Run `streamlit run app_v3.py`

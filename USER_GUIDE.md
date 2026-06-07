@@ -200,17 +200,16 @@ reporter
 
 **Solution:**
 1. Check your actual sheet names in Excel
-2. Open `config/mapping.yaml`
+2. Open `config/mapping_v2.yaml`
 3. Update the `sheet` names to match your Excel file exactly
-4. Update the `col` names to match your column headers
+4. Update the `column` names to match your column headers
 
 Example:
 ```yaml
-retail_excel_fields:
-  sheet: "Your Actual Sheet Name Here"  # Update this
-
-  re_sat:
-    cell: "Your Actual Column Name"  # Update this
+fields:
+  re_req:
+    operation: count_rows
+    sheet: "Your Actual Sheet Name Here"  # Update this
 ```
 
 ### "Template file not found"
@@ -234,7 +233,7 @@ Fix any typos in your template to match the field names exactly.
 
 **Solution:**
 1. Verify your Excel files have data in the expected columns
-2. Check that column names in `config/mapping.yaml` match your Excel exactly
+2. Check that column names in `config/mapping_v2.yaml` match your Excel exactly
 3. Look for empty/null values - they'll be grouped as "Uncategorized"
 
 ---
@@ -254,7 +253,7 @@ Examples:
 - `{{re_sat}}` - Retail satisfaction count
 - `{{re_reso}}` - Retail average resolution time
 
-See `config/mapping.yaml` for the complete list of available fields.
+See `config/mapping_v2.yaml` for the complete list of available fields.
 
 ### Placeholders for Dynamic Tables
 Tables need **two rows**:
@@ -282,13 +281,13 @@ If you receive an updated version of cs-reporter:
 
    **Windows:**
    ```cmd
-   copy config\mapping.yaml config\mapping.yaml.backup
+   copy config\mapping_v2.yaml config\mapping_v2.yaml.backup
    copy templates\report_template.pptx templates\report_template.pptx.backup
    ```
 
    **macOS/Linux:**
    ```bash
-   cp config/mapping.yaml config/mapping.yaml.backup
+   cp config/mapping_v2.yaml config/mapping_v2.yaml.backup
    cp templates/report_template.pptx templates/report_template.pptx.backup
    ```
 
@@ -298,13 +297,13 @@ If you receive an updated version of cs-reporter:
 
    **Windows:**
    ```cmd
-   copy config\mapping.yaml.backup config\mapping.yaml
+   copy config\mapping_v2.yaml.backup config\mapping_v2.yaml
    copy templates\report_template.pptx.backup templates\report_template.pptx
    ```
 
    **macOS/Linux:**
    ```bash
-   cp config/mapping.yaml.backup config/mapping.yaml
+   cp config/mapping_v2.yaml.backup config/mapping_v2.yaml
    cp templates/report_template.pptx.backup templates/report_template.pptx
    ```
 
@@ -328,7 +327,7 @@ If you encounter issues:
 
 1. **Check the console output** - it shows what went wrong
 2. **Review this guide** - especially the Troubleshooting section
-3. **Check your configuration** - ensure `config/mapping.yaml` matches your Excel structure
+3. **Check your configuration** - ensure `config/mapping_v2.yaml` matches your Excel structure
 4. **Verify your template** - ensure all placeholders are spelled correctly
 
 ---
@@ -366,7 +365,7 @@ reporter
 ### File Locations
 - **Reports:** `output/report_*.pptx`
 - **Template:** `templates/report_template.pptx`
-- **Configuration:** `config/mapping.yaml`
+- **Configuration:** `config/mapping_v2.yaml`
 
 ### Excel Requirements
 - Two files needed: current month + previous month

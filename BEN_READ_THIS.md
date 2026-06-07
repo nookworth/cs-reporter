@@ -76,13 +76,13 @@ This creates two files in `demo_data/`:
 **Windows:**
 ```cmd
 .venv\Scripts\activate.bat
-reporter --config config/demo_mapping.yaml
+reporter --config config/demo_mapping_v2.yaml
 ```
 
 **macOS / Linux:**
 ```bash
 source .venv/bin/activate
-reporter --config config/demo_mapping.yaml
+reporter --config config/demo_mapping_v2.yaml
 ```
 
 Select the two demo Excel files when prompted:
@@ -98,11 +98,11 @@ Your report will appear in `output/`.
 | File | In repo? | Notes |
 |------|----------|-------|
 | `templates/demo_template.pptx` | Yes | Generic demo template |
-| `config/demo_mapping.yaml` | Yes | Config for demo data |
+| `config/demo_mapping_v2.yaml` | Yes | V2 config for demo data |
 | `scripts/generate_demo_data.py` | Yes | Generates demo Excel files |
 | `demo_data/*.xlsx` | No | Generated locally (gitignored) |
 | `templates/report_template.pptx` | No | Proprietary (gitignored) |
-| `config/mapping.yaml` | Yes | Production config -- won't work without the production template and matching Excel files |
+| `config/mapping_v2.yaml` | Yes | Production config (V2 format) -- won't work without the production template and matching Excel files |
 
 ---
 
@@ -111,15 +111,16 @@ Your report will appear in `output/`.
 ```
 cs-reporter/
 ├── src/
-│   ├── main.py              # CLI entry point, file dialogs
-│   ├── excel_reader.py      # Excel data extraction
-│   ├── excel_utils.py       # Excel helper functions
-│   ├── ppt_writer.py        # PowerPoint generation
-│   ├── config.py            # Config loader
-│   └── history.py           # History management (WIP, not active)
+│   ├── main_v2.py           # CLI entry point (default), file dialogs
+│   ├── excel_reader_v2.py   # V2 Excel data extraction
+│   ├── excel_utils_v2.py    # V2 Excel helper functions
+│   ├── config_v2.py         # V2 config loader (with validation)
+│   ├── ppt_writer.py        # PowerPoint generation (shared base)
+│   ├── ppt_writer_v3.py     # V3 writer with chart support
+│   └── chart_utils_v3.py    # Chart generation utilities
 ├── config/
-│   ├── mapping.yaml         # Production config
-│   └── demo_mapping.yaml    # Demo config
+│   ├── mapping_v2.yaml      # Production config (default)
+│   └── demo_mapping_v2.yaml # Demo config
 ├── templates/
 │   └── demo_template.pptx   # Demo PowerPoint template
 ├── scripts/
@@ -137,16 +138,16 @@ cs-reporter/
 ## How it works
 
 1. User selects two Excel files (current + previous month)
-2. `excel_reader.py` extracts scalar fields and table data from both files
-3. Fields with `_prev_` in the name are read from the previous month file
-4. `ppt_writer.py` replaces `{{placeholders}}` in the template with extracted values
-5. Dynamic tables (`{{table:name}}`) are populated with aggregated data
-6. Output is saved to `output/report_YYYYMMDD_HHMMSS.pptx`
+2. `excel_reader_v2.py` extracts scalar fields and table data from both files using V2's operation-based config
+3. `ppt_writer_v3.py` generates the PowerPoint, replacing `{{placeholders}}` with extracted values
+4. Dynamic tables (`{{table:name}}`) are populated with aggregated data
+5. Charts are automatically added to a new "Visual Analytics" slide
+6. Output is saved to `output/demo_report_YYYYMMDD_HHMMSS.pptx`
 
 ### Key conventions
 
-- **Field suffixes drive behavior:** `_req` counts rows, `_sat` counts "good" ratings, `_sat_c` counts "good with comment", `_reso` calculates average resolution time
-- **`--config` flag:** Use `reporter --config path/to/config.yaml` to specify a config file. Defaults to `config/mapping.yaml` if omitted.
+- **Operation-based config:** Fields now use explicit operations (`count_rows`, `count_value`, `avg_date_diff`, etc.) instead of suffix inference
+- **`--config` flag:** Use `reporter --config path/to/config.yaml` to specify a config file. Defaults to `config/mapping_v2.yaml`.
 - **Template placeholders:** `{{field_name}}` for scalars, `{{table:table_name}}` for dynamic tables
 
 ---
@@ -156,7 +157,7 @@ cs-reporter/
 The demo setup mirrors the production workflow exactly -- same code paths, same config structure, same template format. The only differences are:
 
 - **Template:** `demo_template.pptx` (generic) vs. `report_template.pptx` (proprietary)
-- **Config:** `demo_mapping.yaml` (demo sheet names) vs. `mapping.yaml` (production sheet names)
+- **Config:** `demo_mapping_v2.yaml` (demo sheet names) vs. `mapping_v2.yaml` (production sheet names)
 - **Data:** Generated dummy data vs. real Excel exports
 
 If you need to test a code change, the demo path exercises all the same logic.
@@ -173,13 +174,13 @@ Before jumping in, read through these files to understand how the pieces fit tog
 
 - `src/excel_reader.py` -- this is where most of the Version 1 work happens. Read through `_extract_field_group()` to see the suffix-based logic that needs to be replaced.
 - `src/excel_utils.py` -- the utility functions that `excel_reader.py` calls. These are mostly fine already; they just need to be parameterized.
-- `config/demo_mapping.yaml` -- the config format you'll be changing. Compare it with the "What general-purpose looks like" section in the roadmap below.
+- `config/demo_mapping_v2.yaml` -- the V2 demo config format.
 
 ### Workflow
 
 1. Create a feature branch off `main`
 2. Make your changes
-3. Test with the demo data (`reporter --config config/demo_mapping.yaml`)
+3. Test with the demo data (`reporter --config config/demo_mapping_v2.yaml`)
 4. Open a PR for review
 
 ### The plan

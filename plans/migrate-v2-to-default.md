@@ -168,26 +168,26 @@ not orphan a V2 import).
 
 ### Phase 5 — Update documentation
 
-- [ ] **5.1 `README.md`.** Replace `python -m src.main` / V1-default language
+- [x] **5.1 `README.md`.** Replace `python -m src.main` / V1-default language
   with the V2 command. Remove the "V1 vs V2, run this for V1" instructions or
   recast them as "legacy / removed."
-  RESULT:
+  RESULT: All V1 commands/docs replaced with V2 equivalents. Migration section updated to state V1 is retired. File overview, quick start, example workflows all updated.
 
-- [ ] **5.2 `BEN_READ_THIS.md`.** The onboarding `reporter --config
+- [x] **5.2 `BEN_READ_THIS.md`.** The onboarding `reporter --config
   config/demo_mapping.yaml` line must point at a **V2** demo config. Update
   any V1 architecture description in the roadmap section.
-  RESULT:
+  RESULT: All `demo_mapping.yaml` → `demo_mapping_v2.yaml`. Project structure, key conventions, and how-it-works sections updated for V2.
 
-- [ ] **5.3 `USER_GUIDE.md` + `QUICKSTART.txt`.** Confirm the documented
+- [x] **5.3 `USER_GUIDE.md` + `QUICKSTART.txt`.** Confirm the documented
   `reporter` flow matches V2 behavior (config format, prompts). Update file
   names/paths as needed.
-  RESULT:
+  RESULT: USER_GUIDE.md: all `config/mapping.yaml`→`config/mapping_v2.yaml`, example config updated to V2 format. QUICKSTART.txt: no V1 references, already correct.
 
-- [ ] **5.4 `.claude/CLAUDE.md`.** Update "Status" and "Project Structure" to
+- [x] **5.4 `.claude/CLAUDE.md`.** Update "Status" and "Project Structure" to
   state V2 is the default and V1 has been retired. Add a dated "Recent
   Changes" entry for this migration. Note that `ppt_writer.py` is the shared
   base writer (kept), not a V1 file.
-  RESULT:
+  RESULT: Status, Project Structure, Configuration Format all updated to V2. Recent Changes entry added for 2026-06-07 migration. V1 retired section added. ppt_writer.py noted as shared base writer (kept).
 
 ### Phase 6 — Retire V1 (one file per task; gate after each)
 

@@ -1,7 +1,7 @@
 # CS Reporter - Project Status
 
-**Last Updated:** February 7, 2026
-**Status:** Core features complete. Onboarding collaborator for Version 1 (config-driven operations). Exploring LLM-powered config generation as differentiator.
+**Last Updated:** June 7, 2026
+**Status:** V2 is the default (V1 retired). CLI uses V2 pipeline with charts (PowerPointWriterV3). Web UI (app_v3.py) available for browser-based workflow. Ongoing work on code quality and documentation cleanup.
 
 ---
 
@@ -20,6 +20,17 @@ CS Reporter is a Python utility that:
 ---
 
 ## Recent Changes
+
+### June 7, 2026 - V2 Default Migration
+
+**Major change:** V2 is now the default CLI entry point. V1 files have been retired.
+
+1. **Entry point flipped:** `setup.py` console_scripts now points to `src.main_v2:cli_entry_point`
+2. **Config default fixed:** `config_v2.load_config(None)` resolves to `config/mapping_v2.yaml` (V2 format) instead of `config/mapping.yaml`
+3. **CLI gets charts:** `main_v2.py` now uses `PowerPointWriterV3` — CLI reports include automatic chart generation
+4. **Docs updated:** README, BEN_READ_THIS, USER_GUIDE all updated to reflect V2 as default
+5. **V1 files deleted:** `main.py`, `config.py`, `excel_reader.py`, `excel_utils.py`, `history.py` removed
+6. **Key reference:** `src/ppt_writer.py` is the shared base writer (NOT deleted) — imported by both `main_v2.py` and `ppt_writer_v3.py`
 
 ### February 7, 2026 - Collaborator Onboarding & Product Direction
 
@@ -179,19 +190,24 @@ The LLM inference approach is the real differentiator vs. competitors like Slide
 cs-reporter/
 ├── src/
 │   ├── __init__.py
-│   ├── main.py              # CLI entry point with file dialogs
-│   ├── excel_reader.py      # Excel field extraction orchestration
-│   ├── excel_utils.py       # Excel utility functions
-│   ├── ppt_writer.py        # PowerPoint generation
-│   ├── config.py            # Configuration loader
-│   └── history.py           # History management (WIP)
+│   ├── main_v2.py           # CLI entry point (default) with file dialogs
+│   ├── excel_reader_v2.py   # Excel field extraction (operation-based)
+│   ├── excel_utils_v2.py    # Excel utility functions
+│   ├── config_v2.py         # Configuration loader (with validation)
+│   ├── ppt_writer.py        # PowerPoint generation (shared base writer — KEPT)
+│   ├── ppt_writer_v3.py     # V3 writer with chart support (extends ppt_writer)
+│   ├── chart_utils_v3.py    # Chart generation utilities
 ├── plans/                   # Implementation plans (agent-agnostic)
-│   └── generalize-to-config-driven-operations.md
+│   ├── generalize-to-config-driven-operations.md
+│   └── migrate-v2-to-default.md
 ├── templates/
-│   └── report_template.pptx # PowerPoint template
+│   ├── report_template.pptx # Production PowerPoint template
+│   └── demo_template.pptx   # Demo PowerPoint template
 ├── config/
-│   ├── mapping.yaml         # Current configuration
-│   └── demo_mapping.yaml    # Demo configuration
+│   ├── mapping_v2.yaml      # V2 production config (default)
+│   ├── demo_mapping_v2.yaml # V2 demo configuration
+│   └── schema_v2.yaml       # V2 operation documentation
+├── app_v3.py                # Streamlit web UI
 ├── output/                  # Generated reports (gitignored)
 ├── requirements.txt
 ├── setup.py
@@ -200,75 +216,46 @@ cs-reporter/
 
 ---
 
-## Configuration Format
+## Configuration Format (V2)
 
-Your `config/mapping.yaml` now has four main sections:
-
-### 1. Standard Excel Fields
-
-Common fields shared across sheets:
+The default config is `config/mapping_v2.yaml`. Fields use explicit operations:
 
 ```yaml
-standard_excel_fields:
-  sheet: "Tickets ADUS Tickets crea... 1"  # Default sheet for this group
+template_path: templates/report_template.pptx
+output_dir: output
 
+fields:
   month:
-    cell: "Ticket created - Date"  # Column header name
-
-  prev_month:
-    cell: "Ticket created - Date"  # Automatically calculates previous month
-```
-
-### 2. Retail Excel Fields
-
-Retail-specific metrics:
-
-```yaml
-retail_excel_fields:
-  sheet: "Tickets ADUS Tickets crea... 1"  # Default sheet
+    operation: parse_month
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket created - Date"
+    source: current
 
   re_req:
-    # No cell needed - auto-counts rows (field ends with _req)
+    operation: count_rows
+    sheet: "Tickets ADUS Tickets crea... 1"
+    source: current
 
   re_sat:
-    cell: "Ticket satisfaction rating"  # Column to read from
+    operation: count_value
+    sheet: "Tickets ADUS Tickets crea... 1"
+    column: "Ticket satisfaction rating"
+    value: "good"
+    source: current
 
-  re_sat_c:
-    cell: "Ticket satisfaction rating"
-```
-
-### 3. Supplier Excel Fields
-
-Supplier-specific metrics:
-
-```yaml
-supplier_excel_fields:
-  sheet: "Tickets ADUS Tickets crea... 2"  # Default sheet
-
-  su_req:
-    # No cell needed - auto-counts rows
-
-  su_sat:
-    cell: "Ticket satisfaction rating"
-```
-
-### 4. Dynamic Tables
-
-```yaml
 table_fields:
   re_sup_cat:
-    sheet: "Tickets ADUS Tickets crea...1"
-    start_row: 2
-
+    sheet: "Tickets ADUS Tickets crea... 1"
     columns:
       - name: "re_cat"
-        col: "W"  # Column letter OR heading name
-
+        col: "Support Category"
     aggregate: true
-    aggregation_type: "count"  # or "sum"
+    aggregation_type: "count"
     group_by: "re_cat"
     count_column: "re_cat_count"
 ```
+
+See `config/schema_v2.yaml` for the full operation reference.
 
 ---
 
@@ -294,24 +281,21 @@ table_fields:
 - `top_orgs` - Top 5 organizations by ticket count
 - All tables support header rows, format preservation, and sorting
 
-### 📦 WIP / Not Currently Used
-- History management system (code exists in `src/history.py` but is commented out in `src/main.py`)
-- Can be re-enabled in the future if needed
+### V1 Files (Retired)
+- `src/main.py`, `src/config.py`, `src/excel_reader.py`, `src/excel_utils.py`, `src/history.py` have been deleted.
+- `src/ppt_writer.py` is the **shared base writer** (KEPT) — imported by both `main_v2.py` and `ppt_writer_v3.py`.
 
 ## Next Steps
 
 > **Implementation plans** are in `plans/` (at project root, not `.claude/`). These are designed for any developer or coding agent, not just Claude Code.
 
-### Current Focus: Version 1 (Config-Driven Operations)
+### Current Focus: Quality & Cleanup
 
-Collaborator (Ben) is working on generalizing the reporter. See `plans/generalize-to-config-driven-operations.md` for the full plan.
+V2 is the default. Ongoing work includes:
 
-**Key deliverables:**
-1. `OPERATIONS` registry in `src/config.py` with validation
-2. `config/schema.yaml` documenting the config format
-3. Refactored `src/excel_reader.py` using operation dispatch (no suffix detection)
-4. Configurable filters in `src/excel_utils.py` (atomic syntax)
-5. Converted `config/mapping.yaml` to explicit operation format
+1. **Code quality:** Type annotations, docstrings, linting
+2. **Cleanup:** V1 files retired, docs updated
+3. **Charts:** CLI now includes automatic chart generation via PowerPointWriterV3
 
 ### After Version 1
 
