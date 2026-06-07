@@ -72,10 +72,10 @@ not orphan a V2 import).
 
 ### Phase 0 — Safety net
 
-- [ ] **0.1 Branch + baseline gate.** Create branch `migrate/v2-default`.
+- [x] **0.1 Branch + baseline gate.** Create branch `migrate/v2-default`.
   Run the full regression gate and record the current pass/fail state.
   Confirm `tests/test_smoke.py` passes on `main` before any change.
-  RESULT:
+  RESULT: Branch created from `refactor/retire-v1`. Gate: V2/V3 imports OK, test_smoke passes. Pre-existing: 1 test_filters failure (case sensitivity), 36 ruff formatting issues. Baseline recorded.
 
 - [ ] **0.2 Capture a V1 reference report.** Run the existing V1 CLI on the
   demo data (`python -m src.main --config config/demo_mapping.yaml` or via
