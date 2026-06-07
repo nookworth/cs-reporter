@@ -82,7 +82,7 @@ def load_config(config_path: Path | str | None = None) -> dict:
     """Load configuration from a YAML file and validate it."""
     if config_path is None:
         project_root = Path(__file__).parent.parent
-        config_path = project_root / "config" / "mapping.yaml"
+        config_path = project_root / "config" / "mapping_v2.yaml"
     else:
         config_path = Path(config_path)
 

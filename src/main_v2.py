@@ -10,9 +10,9 @@ import sys
 import tkinter as tk
 from tkinter import filedialog
 
-from .config_v2 import load_config 
-from .excel_reader_v2 import ExcelReader 
-from .ppt_writer import PowerPointWriter 
+from .config_v2 import load_config
+from .excel_reader_v2 import ExcelReader
+from .ppt_writer import PowerPointWriter
 
 
 def parse_args():
@@ -22,23 +22,23 @@ def parse_args():
     parser.add_argument(
         "--config",
         "-c",
-        help="Path to config file (default: config/mapping.yaml)",
+        help="Path to config file (default: config/mapping_v2.yaml)",
         default=None,
     )
     return parser.parse_args()
 
 
-
 def select_excel_file(title="Select Excel Input File"):
     root = tk.Tk()
-    root.withdraw() 
+    root.withdraw()
 
     file_path = filedialog.askopenfilename(
         title=title, filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")]
     )
 
-    root.destroy() 
+    root.destroy()
     return file_path if file_path else None
+
 
 def main():
     args = parse_args()
@@ -81,7 +81,6 @@ def main():
         print(f"[ERROR] Error reading Excel files: {e}")
         return 1
 
-
     try:
         writer = PowerPointWriter(config)
         output_path = writer.generate_report(data)
@@ -91,7 +90,6 @@ def main():
     except Exception as e:
         print(f"[ERROR] Error generating PowerPoint: {e}")
         return 1
-
 
 
 def cli_entry_point():

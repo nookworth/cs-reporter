@@ -133,13 +133,13 @@ not orphan a V2 import).
   `setup.py`.
   RESULT: Changed setup.py line 32. Gate: imports OK, smoke tests pass.
 
-- [ ] **3.2 Correct `main_v2.py` defaults + hygiene.** Set the `--config`
+- [x] **3.2 Correct `main_v2.py` defaults + hygiene.** Set the `--config`
   default to `<PROD_CONFIG>` (or make `load_config(None)` resolve to it —
   whichever 1.2 indicated). Fix the stale help text (`default:
   config/mapping.yaml` → `<PROD_CONFIG>`). Strip the trailing-whitespace on
   the import lines (`config_v2 `, `excel_reader_v2 `, `ppt_writer `). Do not
   change the pipeline logic.
-  RESULT:
+  RESULT: Changed config_v2.py default from mapping.yaml→mapping_v2.yaml. Fixed help text in main_v2.py. Stripped trailing whitespace from imports, root.withdraw(), root.destroy(). Gate: imports OK, smoke passes, ruff clean.
 
 - [ ] **3.3 Implement the Step 2.1 writer choice in `main_v2.py`.** If (A):
   import and instantiate `PowerPointWriterV3` instead of `PowerPointWriter`.
