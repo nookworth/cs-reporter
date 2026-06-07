@@ -371,7 +371,7 @@ Check:
 
 ## Configuration Checklist
 
-Before running, ensure your `config/mapping.yaml` has:
+Before running, ensure your `config/mapping_v2.yaml` has:
 
 - [ ] Correct Excel sheet names
 - [ ] Correct column letters for all operations
@@ -549,11 +549,11 @@ reporter
 # Verify installation
 which reporter
 
-# Run in debug mode
-python -m src.main
+# Run in debug mode (V2 default)
+reporter
 
 # Check configuration
-cat config/mapping.yaml
+cat config/mapping_v2.yaml
 
 # View history
 ls -la output/history/
