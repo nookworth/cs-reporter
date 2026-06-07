@@ -191,9 +191,9 @@ not orphan a V2 import).
 
 ### Phase 6 — Retire V1 (one file per task; gate after each)
 
-- [ ] **6.1 Delete `src/history.py`.** Confirmed imported by nothing. Delete,
+- [x] **6.1 Delete `src/history.py`.** Confirmed imported by nothing. Delete,
   run gate.
-  RESULT:
+  RESULT: Deleted. Gate: import src.main_v2 OK, full gate passes.
 
 - [ ] **6.2 Delete `src/main.py`.** First `grep -rn "src.main\b\|src\.main:"
   --include=*.py --include=*.toml --include=*.sh --include=*.bat .` and
