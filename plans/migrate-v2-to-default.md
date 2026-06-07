@@ -215,12 +215,12 @@ not orphan a V2 import).
   `excel_reader.py` imported it (excluding `_v2`). Delete, run gate.
   RESULT: Deleted. No references found. Gate passes.
 
-- [ ] **6.6 Confirm `src/ppt_writer.py` is still present and imported.** This
+- [x] **6.6 Confirm `src/ppt_writer.py` is still present and imported.** This
   is a verification task, not a deletion. `import src.ppt_writer` and
   `import src.ppt_writer_v3` must both succeed. If you want to drop the `_v2`
   naming churn, this is where you'd rename `ppt_writer.py` and update the two
   importers (`main_v2.py`, `ppt_writer_v3.py`) — optional, behind the gate.
-  RESULT:
+  RESULT: Verified — `import src.ppt_writer` OK, `import src.ppt_writer_v3` OK. PowerPointWriterV3 inherits from PowerPointWriter (confirmed via `__bases__`). Not renaming (deferred to 7.2).
 
 ### Phase 7 — Final reconciliation
 
