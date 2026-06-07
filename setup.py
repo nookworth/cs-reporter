@@ -3,12 +3,15 @@ Setup script for CS Reporter.
 Allows installation via pip and creates the 'reporter' command.
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read the README file (with UTF-8 encoding for Windows compatibility)
 readme_file = Path(__file__).parent / "README.md"
-long_description = readme_file.read_text(encoding='utf-8') if readme_file.exists() else ""
+long_description = (
+    readme_file.read_text(encoding="utf-8") if readme_file.exists() else ""
+)
 
 setup(
     name="cs-reporter",
@@ -29,7 +32,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "reporter=src.main:cli_entry_point",
+            "reporter=src.main_v2:cli_entry_point",
         ],
     },
     python_requires=">=3.8",

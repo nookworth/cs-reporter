@@ -127,11 +127,11 @@ not orphan a V2 import).
 
 ### Phase 3 — Flip the entry point
 
-- [ ] **3.1 Repoint `setup.py`.** Change `console_scripts` from
+- [x] **3.1 Repoint `setup.py`.** Change `console_scripts` from
   `reporter=src.main:cli_entry_point` to
   `reporter=src.main_v2:cli_entry_point`. Do not change anything else in
   `setup.py`.
-  RESULT:
+  RESULT: Changed setup.py line 32. Gate: imports OK, smoke tests pass.
 
 - [ ] **3.2 Correct `main_v2.py` defaults + hygiene.** Set the `--config`
   default to `<PROD_CONFIG>` (or make `load_config(None)` resolve to it —
