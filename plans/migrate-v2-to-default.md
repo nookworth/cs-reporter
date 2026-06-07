@@ -107,15 +107,15 @@ not orphan a V2 import).
   sub-bullets under this task.
   RESULT: Full parity — all 18 scalar fields match (month, prev_month, re_* 8 fields, su_* 8 fields), all 3 tables have identical row counts (re_sup_cat=8, su_sup_cat=8, top_orgs=5). Both produce 72 replacements. No gaps.
 
-- [ ] **1.4 Fix any parity gaps found in 1.3.** For each gap, fix it in the
+- [x] **1.4 Fix any parity gaps found in 1.3.** For each gap, fix it in the
   **V2** modules (`excel_reader_v2.py` / `excel_utils_v2.py` /
   `config_v2.py` / the V2 config). Re-run 1.3's diff until V2 ≥ V1 in
   coverage. If 1.3 found no gaps, check this off with `RESULT: no gaps`.
-  RESULT:
+  RESULT: no gaps
 
 ### Phase 2 — Decide the writer (charts or not)
 
-- [ ] **2.1 Chart decision for the CLI.** The CLI currently produces no
+- [x] **2.1 Chart decision for the CLI.** The CLI currently produces no
   charts. Choose one and record it:
   - **(A, recommended)** Wire the CLI to `PowerPointWriterV3` so CLI reports
     gain the same charts as the web UI. Requires the V2 config to carry the
@@ -123,7 +123,7 @@ not orphan a V2 import).
   - **(B)** Keep the base `PowerPointWriter` (no charts) for the CLI; charts
     stay a web-UI-only feature.
   Write the choice and rationale here. Steps 4.x implement it.
-  RESULT:
+  RESULT: Choice (A) — wire CLI to PowerPointWriterV3. Rationale: V3 extends V2 gracefully (try/except on each chart), data dict already contains re_sup_cat, top_orgs, and scalars needed for charts. No additional config changes needed. Step 3.3 implements this.
 
 ### Phase 3 — Flip the entry point
 
