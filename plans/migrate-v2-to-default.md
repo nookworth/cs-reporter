@@ -201,10 +201,10 @@ not orphan a V2 import).
   gate.
   RESULT: Deleted. Only self-reference in its own docstring. Gate passes.
 
-- [ ] **6.3 Delete `src/excel_reader.py`.** Confirm nothing but the
+- [x] **6.3 Delete `src/excel_reader.py`.** Confirm nothing but the
   now-deleted `main.py` imported it (`grep -rn "excel_reader\b"` excluding
   `_v2`). Delete, run gate.
-  RESULT:
+  RESULT: Deleted. Only a comment reference in ppt_writer.py (conceptual, no import). Gate passes.
 
 - [ ] **6.4 Delete `src/config.py`.** Confirm no non-deleted module imports
   `from .config import` / `src.config` (excluding `config_v2`). Delete, run
