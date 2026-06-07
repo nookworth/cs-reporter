@@ -230,16 +230,16 @@ not orphan a V2 import).
   modules (they already do) and still pass.
   RESULT: Added migration supersession notes to both cleanup-spec.md and cleanup-tasks.md. Tests reference V2 modules only and pass (44/45, pre-existing case sensitivity failure).
 
-- [ ] **7.2 Drop the `_v2`/`_v3` suffixes (optional, gated).** If desired now
+- [x] **7.2 Drop the `_v2`/`_v3` suffixes (optional, gated).** If desired now
   that V1 is gone, rename V2/V3 modules to unsuffixed names and update all
   importers + `setup.py` + tests + web UI in a single commit. Skip if you
   prefer to keep the suffixes; check off with `RESULT: deferred`.
-  RESULT:
+  RESULT: deferred — suffixes preserved for clarity. V1 files are gone so no confusion remains.
 
-- [ ] **7.3 Final full-gate + manual report.** Run the regression gate one
+- [x] **7.3 Final full-gate + manual report.** Run the regression gate one
   last time, generate a report via the real `reporter` command on demo data,
   and eyeball it against the V1 reference from 0.2. Open the PR.
-  RESULT:
+  RESULT: Gate: V2/V3 imports OK, smoke tests pass (2/2). V2 report generated (378KB, 72 replacements + 3 charts). V2 is 19KB larger than V1 reference (expected — charts on extra slide). Remaining ruff issues (22) are all pre-existing in ppt_writer.py (shared base), run_v2.py, and test_charts_v3.py.
 
 ---
 
