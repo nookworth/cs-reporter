@@ -146,11 +146,11 @@ not orphan a V2 import).
   If (B): no code change — check off with `RESULT: option B, no change`.
   RESULT: Option A: changed import to `from .ppt_writer_v3 import PowerPointWriterV3 as PowerPointWriter`. Gate: imports OK, smoke passes, pytest same baseline.
 
-- [ ] **3.4 Reinstall and smoke the real command.** Run `pip install -e .`,
+- [x] **3.4 Reinstall and smoke the real command.** Run `pip install -e .`,
   then `reporter --config <PROD_CONFIG>` (or pipe a demo config) and confirm
   it runs the V2 pipeline end to end and writes a `.pptx`. The bare
   `reporter` invocation must load a V2-format config, not a V1 one.
-  RESULT:
+  RESULT: `pip install -e .` OK. `reporter --help` shows `default: config/mapping_v2.yaml`. V2 end-to-end with demo config succeeds (378KB .pptx, 72 replacements + charts). `load_config()` (bare) resolves to mapping_v2.yaml. Gate passes.
 
 ### Phase 4 — Reconcile launchers and scripts
 
