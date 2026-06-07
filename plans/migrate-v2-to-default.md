@@ -211,9 +211,9 @@ not orphan a V2 import).
   gate.
   RESULT: Deleted. No live imports (only self/config dict access in ppt_writer.py). Gate passes.
 
-- [ ] **6.5 Delete `src/excel_utils.py`.** Confirm nothing but the deleted
+- [x] **6.5 Delete `src/excel_utils.py`.** Confirm nothing but the deleted
   `excel_reader.py` imported it (excluding `_v2`). Delete, run gate.
-  RESULT:
+  RESULT: Deleted. No references found. Gate passes.
 
 - [ ] **6.6 Confirm `src/ppt_writer.py` is still present and imported.** This
   is a verification task, not a deletion. `import src.ppt_writer` and
