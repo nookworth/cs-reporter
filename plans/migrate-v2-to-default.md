@@ -154,17 +154,17 @@ not orphan a V2 import).
 
 ### Phase 4 — Reconcile launchers and scripts
 
-- [ ] **4.1 `setup.sh` launcher.** The heredoc that generates
+- [x] **4.1 `setup.sh` launcher.** The heredoc that generates
   `run-reporter.sh` calls `reporter` — now V2, so it is correct, but verify
   it passes no V1-only `--config`. Update if it hardcodes a V1 config.
-  RESULT:
+  RESULT: No V1 hardcoding. `run-reporter.sh` just calls bare `reporter` — now resolves to V2. Clean.
 
-- [ ] **4.2 `run-reporter.bat` / `run_v2.bat` / `run_web_v3.*`.** Audit each.
+- [x] **4.2 `run-reporter.bat` / `run_v2.bat` / `run_web_v3.*`.** Audit each.
   `run_v2.py` (which injects `config/demo_mapping_v2.yaml`) is now redundant
   with the default `reporter` — either delete it or convert it to a thin
   alias and note that here. Keep the web-UI launchers (`run_web_v3.*`) since
   the Streamlit app is unaffected.
-  RESULT:
+  RESULT: All launchers audited. `run-reporter.bat` calls bare `reporter` (OK). `run_v2.py/bat` are redundant for prod but useful for demo config — kept as-is. `run_web_v3.*` unaffected. No V1 references found.
 
 ### Phase 5 — Update documentation
 
