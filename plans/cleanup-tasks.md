@@ -1,5 +1,9 @@
 # Ralph Tasks — CS Reporter Cleanup
 
+> **NOTE (2026-06-07):** The `plans/migrate-v2-to-default.md` migration has
+> superseded this plan's "V1 is still the default" assumption. V1 files are
+> now deleted. These cleanup tasks are still relevant for V2/V3 modules.
+
 - [x] Create tests/test_smoke.py — headless end-to-end smoke test using
   demo_data/ Excel fixtures with hardcoded baseline assertions. Verify:
   .venv/bin/python tests/test_smoke.py exits 0.

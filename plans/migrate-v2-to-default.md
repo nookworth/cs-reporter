@@ -224,11 +224,11 @@ not orphan a V2 import).
 
 ### Phase 7 — Final reconciliation
 
-- [ ] **7.1 Update stale plan/test references.** `plans/cleanup-spec.md` and
+- [x] **7.1 Update stale plan/test references.** `plans/cleanup-spec.md` and
   `plans/cleanup-tasks.md` describe V1 as "still the default." Add a note
   that this migration superseded that. Confirm `tests/` only reference V2
   modules (they already do) and still pass.
-  RESULT:
+  RESULT: Added migration supersession notes to both cleanup-spec.md and cleanup-tasks.md. Tests reference V2 modules only and pass (44/45, pre-existing case sensitivity failure).
 
 - [ ] **7.2 Drop the `_v2`/`_v3` suffixes (optional, gated).** If desired now
   that V1 is gone, rename V2/V3 modules to unsuffixed names and update all

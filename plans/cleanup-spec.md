@@ -1,5 +1,11 @@
 # PRD: Code Cleanup & Quality Pass (Post-V2)
 
+> **NOTE (2026-06-07):** The `plans/migrate-v2-to-default.md` migration has been
+> completed — V2 is now the default CLI entry point and V1 files have been
+> deleted. The "V1 is still the default" context in this spec has been
+> superseded. The remaining cleanup tasks (type annotations, docstrings, etc.)
+> are still relevant for V2/V3 modules.
+
 ## Goal
 
 Clean up dead code, fix known bugs, add type annotations and docstrings,
