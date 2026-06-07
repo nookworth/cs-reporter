@@ -93,11 +93,11 @@ not orphan a V2 import).
   Record the chosen path here; later steps reference it as `<PROD_CONFIG>`.
   RESULT: `<PROD_CONFIG>` = `config/mapping_v2.yaml`. Loads fine: template_path→templates/report_template.pptx (exists, 233KB), 18 fields, 3 table_fields.
 
-- [ ] **1.2 Verify `config_v2.load_config(None)` default.** Read
+- [x] **1.2 Verify `config_v2.load_config(None)` default.** Read
   `src/config_v2.py`. Confirm what path it loads when `config_path=None`. If
   it is not `<PROD_CONFIG>` (V2 format), note the discrepancy — Step 3.2
   fixes it. Do not change logic here; this task only documents the behavior.
-  RESULT:
+  RESULT: `load_config(None)` → `config/mapping.yaml` (V1-format), NOT `<PROD_CONFIG>` (`config/mapping_v2.yaml`). Discrepancy documented; Step 3.2 fixes this.
 
 - [ ] **1.3 Output parity check, V1 vs V2.** Run V2 on the same demo data V1
   used in 0.2 (`python -m src.main_v2 --config <V2 demo config>`). Diff the
