@@ -195,11 +195,11 @@ not orphan a V2 import).
   run gate.
   RESULT: Deleted. Gate: import src.main_v2 OK, full gate passes.
 
-- [ ] **6.2 Delete `src/main.py`.** First `grep -rn "src.main\b\|src\.main:"
+- [x] **6.2 Delete `src/main.py`.** First `grep -rn "src.main\b\|src\.main:"
   --include=*.py --include=*.toml --include=*.sh --include=*.bat .` and
   confirm only docs (already updated in Phase 5) reference it. Delete, run
   gate.
-  RESULT:
+  RESULT: Deleted. Only self-reference in its own docstring. Gate passes.
 
 - [ ] **6.3 Delete `src/excel_reader.py`.** Confirm nothing but the
   now-deleted `main.py` imported it (`grep -rn "excel_reader\b"` excluding
