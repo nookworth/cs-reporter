@@ -142,27 +142,30 @@ class TestStartsWith:
         result = apply_filters(sample_df, filters)
         assert len(result) == 2
 
-    def test_starts_with_case_sensitive(self, sample_df):
-        filters = [
-            {"column": "department", "operator": "starts_with", "value": "Sales"}
-        ]
-        result = apply_filters(sample_df, filters)
-        assert len(result) == 1
-
     def test_starts_with_no_match(self, sample_df):
         filters = [{"column": "name", "operator": "starts_with", "value": "Z"}]
         result = apply_filters(sample_df, filters)
         assert len(result) == 0
 
-    def test_starts_with_case_insensitive(self, sample_df):
+    def test_starts_with_case_insensitive_upper_value(self, sample_df):
+        # "Sales", "Sales", and lowercase "sales" all match (case-insensitive)
         filters = [
             {"column": "department", "operator": "starts_with", "value": "Sales"}
         ]
         result = apply_filters(sample_df, filters)
-        assert len(result) == 2
+        assert len(result) == 3
 
-    def test_ends_with_case_sensitive(self, sample_df):
-        filters = [{"column": "department", "operator": "ends_with", "value": "ring"}]
+    def test_starts_with_case_insensitive_lower_value(self, sample_df):
+        # A lowercase value still matches the capitalized "Sales" rows
+        filters = [
+            {"column": "department", "operator": "starts_with", "value": "sales"}
+        ]
+        result = apply_filters(sample_df, filters)
+        assert len(result) == 3
+
+    def test_ends_with_case_insensitive(self, sample_df):
+        # Uppercase value matches the lowercase "...ring" departments
+        filters = [{"column": "department", "operator": "ends_with", "value": "RING"}]
         result = apply_filters(sample_df, filters)
         assert len(result) == 2
 
@@ -225,7 +228,8 @@ class TestChainedFilters:
             {"column": "age", "operator": "greater_than", "value": 20},
         ]
         result = apply_filters(sample_df, filters)
-        assert len(result) == 1
+        # All three Sales/sales rows now match (case-insensitive), all aged > 20
+        assert len(result) == 3
 
     def test_chained_filters_three_filters(self, sample_df):
         filters = [

@@ -40,9 +40,16 @@ def apply_filters(df: pd.DataFrame, filters: list[dict]) -> pd.DataFrame:
         elif op == "not_contains":
             df = df[~df[col].astype(str).str.contains(str(val), case=False, na=False)]
         elif op == "starts_with":
-            df = df[df[col].astype(str).str.startswith(str(val), na=False)]
+            df = df[
+                df[col]
+                .astype(str)
+                .str.lower()
+                .str.startswith(str(val).lower(), na=False)
+            ]
         elif op == "ends_with":
-            df = df[df[col].astype(str).str.endswith(str(val), na=False)]
+            df = df[
+                df[col].astype(str).str.lower().str.endswith(str(val).lower(), na=False)
+            ]
         elif op == "is_null":
             df = df[df[col].isna()]
         elif op == "is_not_null":
