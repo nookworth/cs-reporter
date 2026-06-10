@@ -29,6 +29,9 @@ class ExcelReader:
 
         self.fields = config.get("fields", {})
 
+        self.sheet_identities = config.get("sheet_identities", {})
+        self._sheet_maps: dict[Path, dict[str, str | None]] = {}
+
         self.table_fields = config.get("table_fields", {})
         self.standard_excel_fields = config.get("standard_excel_fields", {})
         self.retail_excel_fields = config.get("retail_excel_fields", {})
@@ -65,12 +68,17 @@ class ExcelReader:
         )
         for table_name, table_config in self.table_fields.items():
             try:
-                sheet = table_config["sheet"]
+                sheet = self._resolve_sheet(self.excel_path, table_config["sheet"])
                 column_name = table_config["columns"][0]["col"]
                 field_name = table_config["columns"][0]["name"]
                 count_column = table_config["count_column"]
                 limit = table_config.get("limit", None)
                 uncategorized_label = table_config.get("uncategorized_label", None)
+
+                if sheet is None:
+                    print(f"  Table '{table_name}': no sheet data — leaving empty")
+                    data[table_name] = []
+                    continue
 
                 print(f"  Reading table '{table_name}' from column '{column_name}'")
 
@@ -116,6 +124,37 @@ class ExcelReader:
         )
         return data
 
+    def _resolve_sheet(self, excel_path: Path, sheet: str) -> str | None:
+        """Map a configured sheet name to the actual sheet in a workbook.
+
+        Returns None when the workbook has no sheet for that population
+        (e.g. a month with zero retail tickets exports a single sheet).
+        """
+        if excel_path not in self._sheet_maps:
+            configured = sorted(
+                {
+                    fc["sheet"]
+                    for fc in self.fields.values()
+                    if isinstance(fc, dict) and "sheet" in fc
+                }
+                | {tc["sheet"] for tc in self.table_fields.values()}
+            )
+            mapping = excel_utils.resolve_sheet_names(
+                excel_path, configured, self.sheet_identities
+            )
+            for name, match in mapping.items():
+                if match is None:
+                    print(
+                        f"  Note: no data for sheet '{name}' in {excel_path.name} "
+                        f"— its fields will be 0/empty"
+                    )
+                elif match != name:
+                    print(
+                        f"  Note: using sheet '{match}' for '{name}' in {excel_path.name}"
+                    )
+            self._sheet_maps[excel_path] = mapping
+        return self._sheet_maps[excel_path].get(sheet, sheet)
+
     def _dispatch_operation(self, field_name: str, field_config: dict[str, Any]) -> Any:
         """Execute a single operation based on field configuration."""
         operation = field_config["operation"]
@@ -128,8 +167,25 @@ class ExcelReader:
             print(f"  Warning: '{field_name}' requires previous file but none provided")
             return None
 
-        sheet = field_config["sheet"]
+        sheet = self._resolve_sheet(excel_path, field_config["sheet"])
         filters = field_config.get("filters")
+
+        if sheet is None:
+            # Month/value reads aren't population-specific — every sheet has
+            # the same columns, so fall back to whatever sheet exists.
+            if operation in ("parse_month", "parse_previous_month", "read_value"):
+                available = [
+                    s for s in self._sheet_maps[excel_path].values() if s is not None
+                ]
+                sheet = available[0] if available else None
+            if sheet is None:
+                defaults = {
+                    "count_rows": 0,
+                    "count_value": 0,
+                    "sum": 0,
+                    "avg_date_diff": 0.0,
+                }
+                return defaults.get(operation)
 
         if operation == "count_rows":
             return excel_utils.count_rows(excel_path, sheet, filters)

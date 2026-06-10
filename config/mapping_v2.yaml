@@ -9,6 +9,19 @@ template_path: templates/report_template.pptx
 
 output_dir: output
 
+# When one ticket population has no tickets in a month, the export emits a
+# single sheet without the " 1"/" 2" suffix. These rules identify which
+# population an unmatched sheet belongs to by its content: retail tickets
+# always belong to the retailer org, supplier tickets never do. Fields whose
+# sheet stays unmatched default to 0 / empty tables.
+sheet_identities:
+  "Tickets ADUS Tickets crea... 1":
+    column: "Ticket organisation name"
+    equals: "Ahold Delhaize USA, Inc."
+  "Tickets ADUS Tickets crea... 2":
+    column: "Ticket organisation name"
+    not_equals: "Ahold Delhaize USA, Inc."
+
 fields:
   month:
     operation: parse_month

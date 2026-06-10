@@ -13,6 +13,95 @@ from typing import Any
 import pandas as pd
 
 
+def _normalize_sheet_name(name: str) -> str:
+    """Normalize a sheet name so ASCII '...' and Unicode '…' compare equal.
+
+    Export tools truncate long sheet names inconsistently: some emit three
+    periods, others a single U+2026 HORIZONTAL ELLIPSIS (macOS smart
+    punctuation also converts typed '...' to '…').
+    """
+    return name.replace("…", "...")
+
+
+def _matches_identity(df: pd.DataFrame, rule: dict) -> bool:
+    """Check whether every data row in a sheet satisfies an identity rule.
+
+    Rules are `{column: ..., equals: ...}` or `{column: ..., not_equals: ...}`.
+    A sheet with no data rows (or without the rule column) matches nothing.
+    """
+    column = rule["column"]
+    if column not in df.columns:
+        return False
+    values = df[column].dropna().astype(str).str.strip().str.lower()
+    if len(values) == 0:
+        return False
+    if "equals" in rule:
+        return bool((values == str(rule["equals"]).strip().lower()).all())
+    if "not_equals" in rule:
+        return bool((values != str(rule["not_equals"]).strip().lower()).all())
+    return False
+
+
+def resolve_sheet_names(
+    excel_path: Path | str,
+    configured_sheets: list[str],
+    identities: dict[str, dict] | None = None,
+) -> dict[str, str | None]:
+    """Map configured sheet names to actual sheet names in a workbook.
+
+    Resolution order per configured name: exact match, ellipsis-normalized
+    match, then content identity rules (for months where the export emits a
+    single unsuffixed sheet because one ticket population is empty). Returns
+    None for configured sheets with no match and for matched sheets that are
+    completely blank — callers should treat those as zero-ticket populations.
+    """
+    xls = pd.ExcelFile(excel_path)
+    unclaimed = list(xls.sheet_names)
+    resolved: dict[str, str | None] = {}
+
+    for name in configured_sheets:
+        target = _normalize_sheet_name(name)
+        match = next((s for s in unclaimed if _normalize_sheet_name(s) == target), None)
+        if match is not None:
+            unclaimed.remove(match)
+        resolved[name] = match
+
+    for name, rule in (identities or {}).items():
+        if name not in resolved or resolved[name] is not None:
+            continue
+        for s in unclaimed:
+            df = pd.read_excel(xls, sheet_name=s, header=0)
+            if _matches_identity(df, rule):
+                resolved[name] = s
+                unclaimed.remove(s)
+                break
+
+    # A name-matched but completely blank sheet (no header row) carries no
+    # data and would make column lookups fail — treat it as missing.
+    for name, match in resolved.items():
+        if match is not None:
+            df = pd.read_excel(xls, sheet_name=match, header=0)
+            if len(df.columns) == 0:
+                resolved[name] = None
+
+    return resolved
+
+
+def read_sheet(excel_path: Path | str, sheet_name: str) -> pd.DataFrame:
+    """Read a sheet by name, tolerating ellipsis-character differences."""
+    xls = pd.ExcelFile(excel_path)
+    if sheet_name not in xls.sheet_names:
+        target = _normalize_sheet_name(sheet_name)
+        matches = [s for s in xls.sheet_names if _normalize_sheet_name(s) == target]
+        if not matches:
+            raise ValueError(
+                f"Sheet '{sheet_name}' not found in {excel_path}. "
+                f"Available sheets: {xls.sheet_names}"
+            )
+        sheet_name = matches[0]
+    return pd.read_excel(xls, sheet_name=sheet_name, header=0)
+
+
 def apply_filters(df: pd.DataFrame, filters: list[dict]) -> pd.DataFrame:
     """Apply filter conditions to a DataFrame based on the filter list."""
     if not filters:
@@ -62,7 +151,7 @@ def count_rows(
     excel_path: Path | str, sheet_name: str, filters: list[dict] | None = None
 ) -> int:
     """Count rows in a sheet, optionally applying filters."""
-    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    df = read_sheet(excel_path, sheet_name)
     df = df.dropna(how="all")
     df = apply_filters(df, filters)
     return len(df)
@@ -70,7 +159,7 @@ def count_rows(
 
 def read_column_value(excel_path: Path | str, sheet_name: str, column_name: str) -> Any:
     """Read the first non-null value from a column."""
-    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    df = read_sheet(excel_path, sheet_name)
 
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
@@ -119,7 +208,7 @@ def count_column_value(
     filters: list[dict] | None = None,
 ) -> int:
     """Count occurrences of a specific value in a column."""
-    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    df = read_sheet(excel_path, sheet_name)
 
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
@@ -142,7 +231,7 @@ def count_unique_values(
     uncategorized_label: str | None = None,
 ) -> list[dict]:
     """Count unique values in a column and return as list of dicts."""
-    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    df = read_sheet(excel_path, sheet_name)
 
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
@@ -176,7 +265,7 @@ def sum_column(
     filters: list[dict] | None = None,
 ) -> float:
     """Sum values in a column, optionally applying filters."""
-    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    df = read_sheet(excel_path, sheet_name)
 
     if column_name not in df.columns:
         raise ValueError(f"Column '{column_name}' not found in sheet '{sheet_name}'")
@@ -211,7 +300,7 @@ def calculate_average_resolution_time(
     filters: list[dict] | None = None,
 ) -> float:
     """Calculate average days between start and end columns."""
-    df = pd.read_excel(excel_path, sheet_name=sheet_name, header=0)
+    df = read_sheet(excel_path, sheet_name)
     df = df.dropna(subset=[end_column])
     df = apply_filters(df, filters)
 

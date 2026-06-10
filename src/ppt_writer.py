@@ -35,13 +35,13 @@ from pptx import Presentation  # python-pptx library
 class PowerPointWriter:
     """
     Generates PowerPoint reports by replacing placeholders in a template.
-    
+
     WORKFLOW:
     1. Load a PowerPoint template file
     2. Find all {{placeholder}} tags in the template
     3. Replace them with data values from the Excel extraction
     4. Save the filled-in presentation
-    
+
     This class handles both simple text replacements and complex table generation.
     """
 
@@ -64,7 +64,7 @@ class PowerPointWriter:
     def generate_report(self, data):
         """
         Generate a PowerPoint report by replacing placeholders with data.
-        
+
         This is the main method that orchestrates the report generation.
         It loads the template, replaces all placeholders, and saves the result.
 
@@ -75,7 +75,7 @@ class PowerPointWriter:
 
         Returns:
             Path to the generated PowerPoint file
-            
+
         Example:
             writer = PowerPointWriter(config)
             output = writer.generate_report({"month": "March", "re_req": 45})
@@ -110,7 +110,7 @@ class PowerPointWriter:
     def _replace_placeholders(self, presentation, data):
         """
         Replace all {{placeholder}} tokens in the presentation with data values.
-        
+
         This method searches through every slide, shape, and table in the presentation
         looking for {{field_name}} tags and replacing them with actual values.
 
@@ -172,18 +172,18 @@ class PowerPointWriter:
     def _populate_table(self, table, table_data):
         """
         Populate a table with dynamic rows if it contains a {{table:name}} placeholder.
-        
+
         CONCEPT: Dynamic Tables
         Instead of manually creating each row in PowerPoint, we use a template approach:
         1. The template has a HEADER row (row 0) with column titles
         2. Row 1 is a TEMPLATE row with placeholders like {{re_cat}}, {{re_cat_count}}
         3. This method duplicates the template row for each data row
         4. It replaces the placeholders in each duplicated row with actual data
-        
+
         Example Template Table:
         Row 0 (Header):  | Category | Count |
         Row 1 (Template): | {{re_cat}} | {{re_cat_count}} |
-        
+
         Becomes:
         Row 0 (Header):  | Category | Count |
         Row 1 (Data):    | Technical | 15 |
@@ -230,7 +230,13 @@ class PowerPointWriter:
         rows_data = table_data[table_name]  # List of dicts, one dict per row
 
         if not rows_data:
-            print(f"  Warning: Table '{table_name}' has no data rows")
+            # Blank the template row so raw {{placeholders}} don't show in
+            # the generated report (e.g. a month with zero retail tickets)
+            print(f"  Table '{table_name}' has no data rows — clearing template row")
+            for cell in table.rows[1].cells:
+                for paragraph in cell.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        run.text = ""
             return 0
 
         # STEP 2: Extract template row information
@@ -328,31 +334,31 @@ class PowerPointWriter:
     def _replace_in_text_frame(self, text_frame, data):
         """
         Replace placeholders in a text frame (text box or cell).
-        
+
         THE POWERPOINT TEXT RUN PROBLEM:
         PowerPoint doesn't store text as a single string. Instead, it stores text
         as multiple "runs" (text fragments), where each run can have different formatting.
-        
+
         PROBLEM: PowerPoint may SPLIT a placeholder across multiple runs!
-        
+
         Example - what you see in PowerPoint:
             "The current month is {{month}}"
-        
+
         What PowerPoint actually stores internally:
             Run 1: "The current month is {{mon"
             Run 2: "th}}"
-        
+
         WHY THIS HAPPENS:
         - User edited the text multiple times
         - Copy/paste from different sources
         - PowerPoint's internal text handling quirks
-        
+
         OUR SOLUTION:
         1. Reassemble all runs into the full original text
         2. Do all replacements on the full text
         3. Put the result in the first run (preserving its formatting)
         4. Clear the other runs
-        
+
         This ensures we find ALL placeholders and preserve formatting.
 
         Args:
