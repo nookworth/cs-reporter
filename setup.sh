@@ -35,6 +35,20 @@ source .venv/bin/activate
 echo "  ✓ Activated"
 echo ""
 
+# Check tkinter is available (needed for the file-picker dialogs).
+# Homebrew Python does not bundle Tk; it must be installed separately.
+echo "Checking tkinter..."
+if ! python -c "import tkinter" 2>/dev/null; then
+    PYVER=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    echo "❌ Error: tkinter is not available for this Python (${PYVER})."
+    echo "   cs-reporter uses tkinter for its file-selection dialogs."
+    echo "   Install it, then re-run ./setup.sh:"
+    echo "     brew install python-tk@${PYVER}"
+    exit 1
+fi
+echo "  ✓ tkinter available"
+echo ""
+
 # Upgrade pip
 echo "Upgrading pip..."
 pip install --upgrade pip --quiet
@@ -43,14 +57,8 @@ echo ""
 
 # Install cs-reporter and all dependencies
 echo "Installing cs-reporter..."
-pip install -e . -r requirements-dev.txt --quiet
+pip install -e . --quiet
 echo "  ✓ cs-reporter installed"
-echo ""
-
-# Set up pre-commit hooks
-echo "Setting up pre-commit hooks..."
-pre-commit install --quiet
-echo "  ✓ Pre-commit hooks installed"
 echo ""
 
 # Create launcher script
