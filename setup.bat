@@ -45,14 +45,8 @@ echo.
 
 REM Install cs-reporter and all dependencies
 echo Installing cs-reporter...
-pip install -e . -r requirements-dev.txt --quiet
+pip install -e . --quiet
 echo   cs-reporter installed
-echo.
-
-REM Set up pre-commit hooks
-echo Setting up pre-commit hooks...
-pre-commit install --quiet
-echo   Pre-commit hooks installed
 echo.
 
 REM Create launcher script

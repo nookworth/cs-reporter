@@ -28,6 +28,7 @@ echo "Copying files..."
 cp -r src "${DIST_DIR}/"
 cp -r config "${DIST_DIR}/"
 cp -r templates "${DIST_DIR}/"
+rm -rf "${DIST_DIR}/templates/config"  # stray duplicate of top-level config/; app doesn't use it
 cp setup.py "${DIST_DIR}/"
 cp setup.sh "${DIST_DIR}/"
 cp setup.bat "${DIST_DIR}/"
@@ -40,6 +41,27 @@ cp USER_GUIDE.md "${DIST_DIR}/"
 # Create empty output directory with .gitkeep
 mkdir -p "${DIST_DIR}/output"
 touch "${DIST_DIR}/output/.gitkeep"
+
+# Full-replacement instructions (Windows)
+cat > "${DIST_DIR}/INSTALL.txt" <<'EOF'
+CS REPORTER - INSTALL / UPDATE (Windows)
+========================================
+
+This is a COMPLETE copy of cs-reporter. To install or update:
+
+1. If you already have a cs-reporter folder, rename it to cs-reporter-old
+   (this keeps a backup, including any reports in its output folder).
+2. Unzip this file. You'll get a fresh "cs-reporter" folder.
+3. Open the new cs-reporter folder and double-click  setup.bat
+     (This needs Python 3 installed. If you don't have it, get it from
+      https://www.python.org/downloads/ and check "Add Python to PATH".)
+4. Generate a report:  run-reporter.bat
+
+Your reports are saved in the "output" folder.
+Once everything works, you can delete the cs-reporter-old backup.
+
+Need help? See USER_GUIDE.md
+EOF
 
 # Clean up Python cache files
 echo "Cleaning up..."
@@ -65,9 +87,10 @@ echo "========================================="
 echo ""
 echo "Distribution package: ${PACKAGE_NAME}"
 echo ""
-echo "Next steps:"
+echo "Next steps (Windows):"
 echo "1. Send '${PACKAGE_NAME}' to your user"
-echo "2. User unzips the file"
-echo "3. User runs: ./setup.sh"
-echo "4. User runs: ./run-reporter.sh"
+echo "2. User renames their old cs-reporter folder to cs-reporter-old"
+echo "3. User unzips the file"
+echo "4. User runs: setup.bat"
+echo "5. User runs: run-reporter.bat"
 echo ""
